@@ -1,0 +1,14 @@
+# Add this file to your .vim folder and make it read only
+
+Hotkeys:
+
+SPACE - h - k                 : Show hotkeys
+SPACE - g - d                 : Go to definition
+SPACE - g - r                 : Go to reference
+SPACE - t                     : Toggle nerdtree
+SPACE - SPACE - p             : Format Prettier
+SPACE - SPACE - u             : Toggle UndoTree
+SPACE - SPACE - f             : Find Files (FZF & RIPGREP)
+Control - p                   : Git files (git ls-files)
+SPACE - Tab                   : Go to next buffer in list 
+SPACE - Tab - Tab             : Go to prev buffer in list 
