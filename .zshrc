@@ -57,3 +57,14 @@ export PATH="$PATH:/opt/nvim-linux64/bin"
 #aliases
 alias ls='ls --color' # to set colors with all zsh commands
 alias vim="nvim"
+alias zshrc="nvim ~/.zshrc"
+alias tmuxconf="nvim ~/.tmux.conf"
+
+#adding local bin to PATH
+source $HOME/.local/bin/env 
+eval "$(uv generate-shell-completion zsh)"
+eval "$(uvx --generate-shell-completion zsh)"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

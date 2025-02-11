@@ -72,6 +72,21 @@ blue = "#89B4FA"
   newline = true
 
   [[blocks.segments]]
+  style = "plain"
+  foreground_templates = [
+    "{{if gt .Code 0}}red{{end}}",
+    "{{if eq .Code 0}}p:os{{end}}",
+  ]
+  background = 'transparent'
+  template = " {{ if .Venv }}({{ .Venv }}){{ end }} "
+  type = "python"
+
+    [blocks.segments.properties]
+    display_mode = "environment"
+    fetch_virtual_env = true
+    home_enabled = true
+
+  [[blocks.segments]]
     type = 'text'
     style = 'plain'
     foreground_templates = [
