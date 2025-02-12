@@ -1,4 +1,4 @@
-local langs = { "lua_ls", "tsserver", "pyright"}
+local langs = { "lua_ls", "ts_ls"}
 
 return {
   {

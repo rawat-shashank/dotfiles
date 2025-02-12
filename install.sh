@@ -1,55 +1,89 @@
 #!/bin/bash
 
-# ----- Configuration -----
-source ./helpers.sh # Source helper functions
+# Main script
 
-# ----- Configuration -----
-export DRY_RUN=true
+# Calculate the path two directories up (the .config directory)
+export DOTFILE_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# --- Option Parsing ---
-while [[ $# -gt 0 ]]; do
+
+# Include helper functions
+source "./scripts/install_helpers.sh"
+# Installation directory
+INSTALL_DIR="./scripts/install_scripts"
+
+# Handle dry-run flag
+DRY_RUN="false"
+while [[ "$#" -gt 0 ]]; do
   case "$1" in
-  -x | --execute)
-    DRY_RUN=false # Set dry-run to FALSE if -x or --execute flag is given
-    shift
-    ;;
-  *)
-    break # Stop option parsing, treat remaining args as non-options
-    ;;
+    --dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
+    *)
+      break  # Stop processing flags
+      ;;
   esac
 done
 
-# ----- OS Detection -----
-detect_os() {
-  if [[ -n "$WSL_DISTRO_NAME" ]]; then
-    OS="ubuntu" # Assuming WSL is Ubuntu in this example
-  elif [[ "$OSTYPE" == "linux-gnu" ]]; then
-    OS="ubuntu" # Assuming Ubuntu or Debian-based for linux-gnu in this example
-  elif [[ "$OSTYPE" == "darwin"* ]]; then
-    OS="macos"
-  else
-    OS="unknown"
+# Function to get yes/no input from the user (modified for -y flag)
+get_yes_no_input() {
+  local prompt="$1"
+  local choice
+
+  # Check for -y flag
+  if [[ "$ALL_YES" == "true" ]]; then
+    echo "y"  # Auto-yes if -y flag is set
+    return 0
   fi
-  echo "$OS"
+
+  while true; do
+    read -r -p "$prompt (y/N/a for all): " choice  # Added 'a' option
+    case "$choice" in
+      y|Y)
+        echo "y"
+        return 0
+        ;;
+      n|N)
+        echo "n"
+        return 0
+        ;;
+      a|A)  # Handle 'a' for all
+        ALL_YES="true"  # Set the flag
+        echo "y" # Return y so current package will be installed
+        return 0
+        ;;
+      *)
+        warning_message "Invalid input. Please enter y, n, or a."
+        ;;
+    esac
+  done
 }
 
-OS=$(detect_os)
+# Handle -y flag
+ALL_YES="false" # Initialize
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -y)
+      ALL_YES="true"
+      shift
+      ;;
+    *)
+      break  # Stop processing flags
+      ;;
+  esac
+done
 
-# ----- Call OS-Specific Script -----
-case "$OS" in
-"ubuntu")
-  bash ubuntu.sh # Call ubuntu.sh for Ubuntu-based systems
-  ;;
-"macos")
-  # For future macOS support, you would call macos.sh or similar
-  # bash macos.sh
-  error_message "macOS setup is not yet implemented."
-  exit 1
-  ;;
-"unknown")
-  error_message "Unknown OS detected: $OS. Aborting."
-  exit 1
-  ;;
-esac
+# Packages to install (can be extended)
+packages=("neovim")
 
-success_message "installation setup completed."
+# Iterate through packages
+for package in "${packages[@]}"; do
+  if ! get_yes_no_input "Do you want to install $package?"; then
+    info_message "Skipping $package installation."
+    continue  # Skip to the next package
+  fi
+
+  install_package "$package" "$INSTALL_DIR" "$DRY_RUN"
+done
+
+echo "Installation process complete."
