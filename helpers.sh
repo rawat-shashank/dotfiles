@@ -66,19 +66,20 @@ _perform_package_installation() {
   local install_execution="$2" # Code snippet to execute installation
 
   info_message "Checking and installing $package_name..."
-  if command -v "$package_name" &>/dev/null; then
+  if command -v "$package_name" &> /dev/null; then
     info_message "$package_name is already installed."
     return 0
   else
     info_message "$package_name is not installed. Installing..."
     if [[ "$DRY_RUN" == "true" ]]; then
+      # Capture the command to be executed for dry-run output
       info_message "Dry-run: Would execute: $install_execution"
       return 1 # Simulate not installed for dry-run
     else
       # Execute the provided installation code snippet
       eval "$install_execution"
 
-      if command -v "$package_name" &>/dev/null; then
+      if command -v "$package_name" &> /dev/null; then
         success_message "$package_name installed successfully."
         return 0
       else
@@ -115,17 +116,9 @@ create_symlink() {
 #Function to check or install a package - OS-agnostic check, installation command to be provided by caller
 check_or_install_package() {
   local package_name="$1"
-  local install_command="$2"       # OS-specific install command (e.g., "sudo apt install -y ...")
-  local install_method="${3:-apt}" # Installation method: "apt" (default) or "curl" or "none"
+  local install_command="$2"
 
-  local execution=""
-  if [[ "$install_method" == "curl" ]]; then
-    execution="bash <(curl -s \"\$install_command\")" # For curl method, install_command is actually the URL
-  else
-    execution="eval \"\$install_command\"" # For apt or other methods, install_command is the actual command
-  fi
-
-  _perform_package_installation "$package_name" "$execution"
+  _perform_package_installation "$package_name" "$install_command"
 }
 
 #function to check or install package using curl

@@ -6,6 +6,19 @@ source ./helpers.sh # Source helper functions
 # ----- Configuration -----
 export DRY_RUN=true
 
+# --- Option Parsing ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -x | --execute)
+    DRY_RUN=false # Set dry-run to FALSE if -x or --execute flag is given
+    shift
+    ;;
+  *)
+    break # Stop option parsing, treat remaining args as non-options
+    ;;
+  esac
+done
+
 # ----- OS Detection -----
 detect_os() {
   if [[ -n "$WSL_DISTRO_NAME" ]]; then

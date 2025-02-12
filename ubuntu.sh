@@ -7,26 +7,56 @@ source ./helpers.sh
 declare -a install_items=(
   "git"
   "zsh"
-  "oh-my-posh"
+  #"oh-my-posh"
 )
 
 # ----- OS-Specific Commands (Ubuntu) -----
-update_command="sudo apt update"
+update_command="sudo apt upgrade & sudo apt update"
 install_git_command="sudo apt install -y git"
 install_zsh_command="sudo apt install -y zsh"
-
+install_oh_my_posh_command="https://ohmyposh.dev/install.sh"
 # ----- Main Script (Ubuntu Specific) -----
 
 # Check for system updates
-start_spinner "Checking for system updates..."
 if [[ "$DRY_RUN" == "true" ]]; then
   info_message "Dry-run: Would execute: $update_command"
   stop_spinner_success "System updates check skipped (dry-run)."
 else
-  if eval "$update_command"; then
-    stop_spinner_success "System updates checked."
+  # Check if sudo password is required (non-blocking)
+  if sudo -n true; then
+    # Sudo doesn't require password
+
+    # Prompt user FIRST
+    read -p "Press Enter to proceed with system update and upgrade..."
+
+    # NOW start the spinner
+    start_spinner "Updating and Upgrading system..."
+
+    if eval "$update_command"; then
+      stop_spinner_success "System updated and upgraded."
+    else
+      stop_spinner_failure "System update and upgrade failed."
+    fi
   else
-    stop_spinner_failure "System update check failed."
+    # Sudo requires password
+    if tty -s; then
+      # Interactive shell
+
+      # Prompt user FIRST
+      read -p "Press Enter to proceed with system update and upgrade (may require password)..."
+
+      # NOW start the spinner
+      start_spinner "Updating and Upgrading system..."
+
+      if eval "$update_command"; then  # User will be prompted for password here
+        stop_spinner_success "System updated and upgraded."
+      else
+        stop_spinner_failure "System update and upgrade failed after password prompt."
+      fi
+    else
+      warning_message "Non-interactive shell, skipping system updates requiring password."
+      stop_spinner_skipped "System updates skipped (non-interactive and password needed)."
+    fi
   fi
 fi
 
