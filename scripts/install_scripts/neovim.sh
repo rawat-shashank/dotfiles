@@ -99,8 +99,8 @@ install_neovim() {
   fi
 
   # adding path to bashrc and zshrc
-  echo "export PATH=\"\$PATH:$USER_OPT_DIR/$ARCHIVE_NAME/bin\"" >> ~/.bashrc || { stop_spinner_failure "Failed to add Neovim to PATH (bash)."; return 1; }
-  echo "export PATH=\"\$PATH:$USER_OPT_DIR/$ARCHIVE_NAME/bin\"" >> ~/.zshrc || { stop_spinner_failure "Failed to add Neovim to PATH (zsh)."; return 1; }
+  # echo "export PATH=\"\$PATH:$USER_OPT_DIR/$ARCHIVE_NAME/bin\"" >> ~/.bashrc || { stop_spinner_failure "Failed to add Neovim to PATH (bash)."; return 1; }
+  # echo "export PATH=\"\$PATH:$USER_OPT_DIR/$ARCHIVE_NAME/bin\"" >> ~/.zshrc || { stop_spinner_failure "Failed to add Neovim to PATH (zsh)."; return 1; }
 
   # sourcing to verify if it is installed properly
   source ~/.bashrc || { stop_spinner_failure "Failed to source ~/.bashrc."; return 1; }
@@ -122,8 +122,47 @@ install_neovim() {
   return 0
 }
 
+# Function to install dependencies (now handles an array)
+install_dependencies() {
+  local dependencies=("$@")  # Get all arguments as an array
+
+  if [[ ${#dependencies[@]} -eq 0 ]]; then
+    info_message "No dependencies specified. Skipping dependency installation."
+    return 0
+  fi
+
+  for dependency in "${dependencies[@]}"; do
+    if [[ "$DRY_RUN" == "true" ]]; then
+      info_message "[DRY RUN] Would install dependency: $dependency"
+      continue # Skip to the next dependency in dry run
+    fi
+
+    info_message "Installing dependency: $dependency..."
+
+    # Check if the dependency is already installed (optional, but good practice)
+    if command -v "$dependency" &> /dev/null; then # Check if command exists
+      info_message "$dependency is already installed. Skipping."
+      continue # Skip to the next dependency
+    fi
+
+    if ! get_sudo_password; then return 1; fi
+    # Install the dependency using apt-get (or your preferred method)
+    echo "$SUDO_PASSWORD" | sudo -S apt-get install -y "$dependency" || { error_message "Failed to install dependency: $dependency"; return 1; }
+
+    success_message "Dependency $dependency installed successfully."
+  done # End of the for loop
+  return 0
+}
+
 install_neovim
 
-#create symlink for nvim
-CONFIG_PATH=".config/nvim"
-create_symlink "$DOTFILE_PATH/$CONFIG_PATH" "$HOME/$CONFIG_PATH"
+# Install dependencies (after Neovim installation)
+if [[ $? -eq 0 ]]; then # Only try to install dependencies if neovim install was successful
+  declare -a neovim_deps=("xclip" "ripgrep") # Define the dependencies array
+  install_dependencies "${neovim_deps[@]}" # Pass the array to the function
+
+  #create symlink for nvim
+  CONFIG_PATH=".config/nvim"
+  create_symlink "$DOTFILE_PATH/$CONFIG_PATH" "$HOME/$CONFIG_PATH"
+fi
+

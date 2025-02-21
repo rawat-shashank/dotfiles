@@ -5,12 +5,6 @@
 # Calculate the path two directories up (the .config directory)
 export DOTFILE_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-
-# Include helper functions
-source "./scripts/install_helpers.sh"
-# Installation directory
-INSTALL_DIR="./scripts/install_scripts"
-
 # Handle dry-run flag
 DRY_RUN="false"
 while [[ "$#" -gt 0 ]]; do
@@ -24,40 +18,6 @@ while [[ "$#" -gt 0 ]]; do
       ;;
   esac
 done
-
-# Function to get yes/no input from the user (modified for -y flag)
-get_yes_no_input() {
-  local prompt="$1"
-  local choice
-
-  # Check for -y flag
-  if [[ "$ALL_YES" == "true" ]]; then
-    echo "y"  # Auto-yes if -y flag is set
-    return 0
-  fi
-
-  while true; do
-    read -r -p "$prompt (y/N/a for all): " choice  # Added 'a' option
-    case "$choice" in
-      y|Y)
-        echo "y"
-        return 0
-        ;;
-      n|N)
-        echo "n"
-        return 0
-        ;;
-      a|A)  # Handle 'a' for all
-        ALL_YES="true"  # Set the flag
-        echo "y" # Return y so current package will be installed
-        return 0
-        ;;
-      *)
-        warning_message "Invalid input. Please enter y, n, or a."
-        ;;
-    esac
-  done
-}
 
 # Handle -y flag
 ALL_YES="false" # Initialize
@@ -73,8 +33,44 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
-# Packages to install (can be extended)
-packages=("neovim")
+export ALL_YES
+
+# Include helper functions
+source "./scripts/install_helpers.sh"
+# Installation directory
+INSTALL_DIR="./scripts/install_scripts"
+
+
+# Function to ask about update/upgrade (or perform if -y is passed)
+perform_update_upgrade() {
+  # Check for sudo password (if needed) -  adapt as necessary
+  if ! get_sudo_password; then # Assuming get_sudo_password is in install_helpers.sh
+    return 1
+  fi
+  start_spinner "Updating package lists..."
+  echo "$SUDO_PASSWORD" | sudo apt-get update > /dev/null || { stop_spinner_failure "Failed to update package list."; return 1; }
+  stop_spinner_success "package lists updated."
+  start_spinner "Upgrading existing packages..."
+  echo "$SUDO_PASSWORD" | sudo apt-get upgrade -y > /dev/null || { stop_spinner_failure "Failed to upgrade existing packages."; return 1; }
+  stop_spinner_success "package lists upgraded."
+}
+
+ask_update_upgrade() {
+  if ! get_yes_no_input "Do you want to update and upgrade system packages before installation?"; then
+    info_message "Skipping system update and upgrade."
+    return 0
+  fi
+
+    perform_update_upgrade
+  return 0
+}
+
+
+# Ask about update/upgrade (or perform if -y)
+ask_update_upgrade
+
+# --- Packages to install ---  (Moved this line UP!)
+packages=("zsh" "neovim" "tmux" "oh-my-posh")
 
 # Iterate through packages
 for package in "${packages[@]}"; do

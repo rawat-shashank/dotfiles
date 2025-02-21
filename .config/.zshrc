@@ -52,19 +52,20 @@ fi
 
 # will move it to zshrc.general as well, need to add nvim installation and config steps first
 # load path of nvim bin
-export PATH="$PATH:/opt/nvim-linux64/bin"
+export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 
 #aliases
 alias ls='ls --color' # to set colors with all zsh commands
 alias vim="nvim"
 alias zshrc="nvim ~/.zshrc"
 alias tmuxconf="nvim ~/.tmux.conf"
+alias lcd="tmux new -A -s dev -c '/mnt/c/Users/sr4394/Documents/pdev/leetcode-daily'"
 
-#adding local bin to PATH
-source $HOME/.local/bin/env 
-eval "$(uv generate-shell-completion zsh)"
-eval "$(uvx --generate-shell-completion zsh)"
+# get oh-my-posh theme setup
+eval "$(oh-my-posh init zsh --config /home/sr4394/.config/oh-my-posh/zen.toml)"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+

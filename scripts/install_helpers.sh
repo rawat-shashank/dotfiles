@@ -19,10 +19,13 @@ error_message() {
 }
 
 info_message() {
-  echo -e "$1" # Info messages are not colored by default, can be extended
+  echo -e "$1"
 }
 
 # ----- spinner Functions -----
+
+CLEAR_LINE=$'\e[K'
+
 start_spinner() {
   SPINNER_CHARS="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
   SPINNER_PID=0
@@ -44,7 +47,7 @@ start_spinner() {
 stop_spinner_success() {
   if [[ -n "$SPINNER_PID" ]]; then
     kill "$SPINNER_PID" 2>/dev/null
-    printf "\r${GREEN}✔${NC} $1\n"
+    printf "\r${GREEN}✔${NC} $1${CLEAR_LINE}\n"
     SPINNER_PID=0
   fi
 }
@@ -52,19 +55,45 @@ stop_spinner_success() {
 stop_spinner_failure() {
   if [[ -n "$SPINNER_PID" ]]; then
     kill "$SPINNER_PID" 2>/dev/null
-    printf "\r${RED}✘${NC} $1\n"
+    printf "\r${RED}✘${NC} $1${CLEAR_LINE}\n"
     SPINNER_PID=0
   fi
 }
 
-# ----- Helper Functions -----
+# Function to get yes/no input from the user (modified for -y flag)
+get_yes_no_input() {
+  local prompt="$1"
+  local choice
+
+  # Check for -y flag
+  if [[ "$ALL_YES" == "true" ]]; then
+    return 0
+  fi
+
+  while true; do
+    read -r -p "$prompt (y/N): " choice  # Added 'a' option
+    case "$choice" in
+      y|Y)
+        return 0
+        ;;
+      n|N)
+        return 1
+        ;;
+      *)
+        warning_message "Invalid input. Please enter y or n."
+        ;;
+    esac
+  done
+}
+
+
 # Function to install a package (modified to NOT use spinners yet)
 install_package() {
   local package="$1"
   local install_dir="$2"
   local dry_run="$3"
 
-  echo "Processing: $package"
+  info_message "\nProcessing: $package\n"
 
   # Check if install script exists
   local script_path="$install_dir/$package.sh"
@@ -81,10 +110,10 @@ install_package() {
 
   # Execute the installation script directly (no spinner)
   if bash "$script_path"; then
-    success_message "$package installed successfully."
+    success_message "\n$package installed successfully.\n"
     return 0
   else
-    error_message "$package installation failed."
+    error_message "\n$package installation failed.\n"
     return 1
   fi
 }
@@ -129,7 +158,7 @@ create_symlink() {
   if [[ -L "$target_path" ]]; then # -L checks for symlink
     # If the existing symlink points to the correct location, do nothing
     if [[ "$(readlink "$target_path")" == "$source_path" ]]; then
-      info_message "Symlink already exists and points to the correct location. Skipping."
+      info_message "symlink already exists and points to the correct location. Skipping."
       return 0
     else
       # If the symlink exists but points to wrong place, ask if to overwrite
