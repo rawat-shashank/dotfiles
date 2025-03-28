@@ -59,13 +59,11 @@ alias ls='ls --color' # to set colors with all zsh commands
 alias vim="nvim"
 alias zshrc="nvim ~/.zshrc"
 alias tmuxconf="nvim ~/.tmux.conf"
-alias lcd="tmux new -A -s dev -c '/mnt/c/Users/sr4394/Documents/pdev/leetcode-daily'"
+alias lcd="tmux new -A -s dev -c '$HOME/dev/leetcode-daily'"
 
 # get oh-my-posh theme setup
-eval "$(oh-my-posh init zsh --config /home/sr4394/.config/oh-my-posh/zen.toml)"
+eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/zen.toml)"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-

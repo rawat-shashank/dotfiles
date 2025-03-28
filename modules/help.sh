@@ -1,0 +1,23 @@
+# --- Help Function ---
+show_help() {
+    echo "Usage: ./main.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  --dry-run   Simulate the installation process without making any changes."
+    echo "  -y          Answer 'yes' to all prompts (use with caution)."
+    echo "  --help, -h  Show this help message."
+    echo ""
+    echo "Description:"
+    echo "  This script automates the installation of a set of predefined packages"
+    echo "  (zsh, neovim, tmux, oh-my-posh) on your system. It detects the"
+    echo "  operating system and uses the appropriate package manager."
+    echo ""
+    echo "How to Run:"
+    echo "  1. Make the script executable: chmod +x main.sh"
+    echo "  2. Run the script: ./main.sh"
+    echo "  3. You can use options like:"
+    echo "     - Simulate: ./main.sh --dry-run"
+    echo "     - Non-interactive (answer yes to all): ./main.sh -y"
+    echo "     - Simulate non-interactive: ./main.sh --dry-run -y"
+    echo "     - Show help: ./main.sh --help or ./main.sh -h"
+}
