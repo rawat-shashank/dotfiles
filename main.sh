@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source constants
-source "./modules/env.sh"
+source "./modules/constants.sh"
 
 # Source help command functions
 source "./modules/help.sh"
