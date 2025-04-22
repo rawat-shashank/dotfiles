@@ -1,24 +1,23 @@
 return {
-  { -- Add indentation guides even on blank lines
-    'lukas-reineke/indent-blankline.nvim',
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help ibl`
-    main = 'ibl',
-    opts = {},
-  },
-  {
-    "christoomey/vim-tmux-navigator"
-  },
-  {
-    "windwp/nvim-autopairs",
-    config = function()
-      require("nvim-autopairs").setup({
-        check_ts = true, -- enable treesitter
-        ts_config = {
-          lua = { "string" },
-          javascript = { "template_string" }
-        }
-      })
-    end
-  }
+	{
+		"christoomey/vim-tmux-navigator",
+	},
+	{
+		"folke/which-key.nvim",
+		event = "VeryLazy",
+		opts = {
+			-- your configuration comes here
+			-- or leave it empty to use the default settings
+			-- refer to the configuration section below
+		},
+		keys = {
+			{
+				"<leader>?",
+				function()
+					require("which-key").show({ global = false })
+				end,
+				desc = "Buffer Local Keymaps (which-key)",
+			},
+		},
+	},
 }

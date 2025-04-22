@@ -18,7 +18,7 @@ keymap.set("n", "<C-q>", "<ESC>:q!<CR>", opts)
 --keymap.set("n", "x", "_x")
 
 -- tab management
-keymap.set("n", "<leader>to", ":tabnew<CR>", opts) -- open new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>", opts)   -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>", opts) -- close current tab
-keymap.set("n", "<leader>tn", ":tabn<CR>", opts) -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>", opts) -- go to previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>", opts)     -- go to next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>", opts)     -- go to previous tab
