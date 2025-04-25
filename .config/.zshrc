@@ -45,11 +45,6 @@ zinit snippet OMZP::git  #came from https://github.com/ohmyzsh/ohmyzsh/tree/mast
 # Load completions, autoloads autocompletions for zsh-complletions
 autoload -Uz compinit && compinit
 
-# Check if the general configuration file exists
-if [ -f ~/.zshrc.general ]; then
-  source ~/.zshrc.general
-fi
-
 # will move it to zshrc.general as well, need to add nvim installation and config steps first
 # load path of nvim bin
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
@@ -59,7 +54,7 @@ alias ls='ls --color' # to set colors with all zsh commands
 alias vim="nvim"
 alias zshrc="nvim ~/.zshrc"
 alias tmuxconf="nvim ~/.tmux.conf"
-alias lcd="tmux new -A -s leetcode-daily -c $HOME/dev/leetcode-daily"
+alias lcd="tmux new -A -s leetcode-daily -c $HOME/dev/leetcode-daily \; split-window -h -l 65%"
 
 # get oh-my-posh theme setup
 eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/zen.toml)"
@@ -67,3 +62,9 @@ eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/zen.toml)"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+# this will overwrite any local zsh changes
+if [ -f ~/.zshrc.general ]; then
+  source ~/.zshrc.general
+fi

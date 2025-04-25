@@ -87,7 +87,7 @@ return {
 					opts.desc = "[G]oto [R]efernces"
 					keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
 					opts.desc = "[C]ode [r]ename"
-					keymap.set("n", "<leader>cn", vim.lsp.buf.rename, opts)
+					keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
 					opts.desc = "[G]oto [D]efinition"
 					keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts)
 					opts.desc = "[G]oto [I]mplementations"
