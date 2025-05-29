@@ -49,3 +49,6 @@ api.nvim_create_autocmd("TextYankPost", {
 		vim.highlight.on_yank()
 	end,
 })
+
+-- force neo-tree to not update cwd itself
+opt.autochdir = false

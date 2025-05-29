@@ -54,7 +54,6 @@ alias ls='ls --color' # to set colors with all zsh commands
 alias vim="nvim"
 alias zshrc="nvim ~/.zshrc"
 alias tmuxconf="nvim ~/.tmux.conf"
-alias lcd="tmux new -A -s leetcode-daily -c $HOME/dev/leetcode-daily \; split-window -h -l 65%"
 
 # get oh-my-posh theme setup
 eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/zen.toml)"
