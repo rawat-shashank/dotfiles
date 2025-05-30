@@ -4,19 +4,7 @@ return {
 		tag = "0.1.5",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
-			{
-				"nvim-telescope/telescope-ui-select.nvim",
-				config = function()
-					require("telescope").setup({
-						extensions = {
-							["ui-select"] = {
-								require("telescope.themes").get_dropdown({}),
-							},
-						},
-					})
-					require("telescope").load_extension("ui-select")
-				end,
-			},
+			"andrew-george/telescope-themes",
 		},
 		config = function()
 			require("telescope").setup({
@@ -32,6 +20,23 @@ return {
 						return { "--hidden" }
 					end,
 				},
+				extenstions = {
+					thems = {
+						-- (boolean) -> show/hide previewer window
+						enable_previewer = true,
+
+						-- (boolean) -> enable/disable live preview
+						enable_live_preview = false,
+
+						persist = {
+							-- enable persisting last theme choice
+							enabled = true,
+
+							-- override path to file that execute colorscheme command
+							path = vim.fn.stdpath("config") .. "/lua/plugins/colorscheme.lua",
+						},
+					},
+				},
 			})
 			local builtin = require("telescope.builtin")
 			-- TODO: fix the keymaps
@@ -46,6 +51,12 @@ return {
 			vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
 			vim.keymap.set("n", "<leader>st", "<cmd>TodoTelescope<cr>", { desc = "[S]earch [T]odo Comments" })
 			vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
+			vim.keymap.set(
+				"n",
+				"<leader>ts",
+				"<cmd>Telescope themes<CR>",
+				{ noremap = true, silent = true, desc = "[T]heme [S]witcher" }
+			)
 			-- Shortcut for searching your Neovim configuration files
 			vim.keymap.set("n", "<leader>sn", function()
 				builtin.find_files({ cwd = vim.fn.stdpath("config") })
