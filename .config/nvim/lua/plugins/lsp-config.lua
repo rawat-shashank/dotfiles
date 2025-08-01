@@ -17,17 +17,15 @@ local tools = {
 
 return {
 	{
-		"williamboman/mason.nvim",
-		-- dependencies = {
-		-- 	"williamboman/mason-lspconfig.nvim",
-		-- 	"WhoIsSethDaniel/mason-tool-installer.nvim",
-		-- },
+		"mason-org/mason.nvim",
+		version = "^1.0.0",
 		config = function()
 			require("mason").setup({})
 		end,
 	},
 	{
-		"williamboman/mason-lspconfig.nvim",
+		"mason-org/mason-lspconfig.nvim",
+		version = "^1.0.0",
 		config = function()
 			require("mason-lspconfig").setup({
 				ensure_installed = servers,
@@ -98,6 +96,9 @@ return {
 					keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
 					opts.desc = "Show documentation for what is under cursor"
 					keymap.set("n", "K", vim.lsp.buf.hover, opts)
+
+					opts.desc = "[Open] [D]iagnostic in floating terminal"
+					vim.keymap.set("n", "<leader>od", vim.diagnostic.open_float, opts)
 				end,
 			})
 		end,

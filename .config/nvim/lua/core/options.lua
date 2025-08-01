@@ -5,30 +5,37 @@ local api = vim.api
 -- line number and relative line number
 opt.number = true
 opt.relativenumber = true
+opt.wrap = false
+opt.cursorline = true
 
 -- tabs & indentation
 opt.tabstop = 2
 opt.softtabstop = 2
 opt.shiftwidth = 2
 opt.expandtab = true
-
---line wrapping
-opt.wrap = false
+opt.smartindent = true
+opt.autoindent = true
 
 -- search settings
 opt.ignorecase = true
 opt.smartcase = true
 opt.hlsearch = false
-
--- cursor line
-opt.cursorline = true
+opt.incsearch = true
 
 -- appreance
 opt.termguicolors = true
 opt.background = "dark"
 opt.signcolumn = "yes"
-opt.scrolloff = 8
+opt.scrolloff = 10
 opt.colorcolumn = "80,120"
+
+-- file handling
+opt.backup = false
+opt.writebackup = false
+opt.swapfile = false
+opt.undofile = true
+opt.autoread = true
+opt.autochdir = false
 
 -- backspace
 opt.backspace = "indent,eol,start"
@@ -42,7 +49,7 @@ vim.opt.clipboard = "unnamedplus"
 --  See `:help vim.highlight.on_yank()`
 api.nvim_create_autocmd("TextYankPost", {
 	desc = "Highlight when yanking (copying) text",
-	group = vim.api.nvim_create_augroup("kickstart-highlight-yank", {
+	group = api.nvim_create_augroup("kickstart-highlight-yank", {
 		clear = true,
 	}),
 	callback = function()
@@ -50,5 +57,15 @@ api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
--- force neo-tree to not update cwd itself
-opt.autochdir = false
+-- Return to last edit position when opening files
+api.nvim_create_autocmd("BufReadPost", {
+	desc = "Return to last edit position when opening files",
+	group = augroup,
+	callback = function()
+		local mark = api.nvim_buf_get_mark(0, '"')
+		local lcount = api.nvim_buf_line_count(0)
+		if mark[1] > 0 and mark[1] <= lcount then
+			pcall(api.nvim_win_set_cursor, 0, mark)
+		end
+	end,
+})
