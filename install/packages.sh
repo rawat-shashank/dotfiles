@@ -7,4 +7,5 @@ sudo pacman -S --noconfirm --needed \
   ripgrep \
   nvim \
   syncthing \
+  yazi \
   tmux
