@@ -58,5 +58,8 @@ return {
 			end
 			return tostring(os.time()) .. "-" .. suffix
 		end,
+		checkbox = {
+			order = { " ", "x", "-" },
+		},
 	},
 }

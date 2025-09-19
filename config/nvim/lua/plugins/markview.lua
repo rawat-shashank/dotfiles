@@ -10,4 +10,10 @@ return {
 	dependencies = {
 		"saghen/blink.cmp",
 	},
+	opts = {
+		preview = {
+			enable = false,
+			enable_kybrid_mode = false,
+		},
+	},
 }

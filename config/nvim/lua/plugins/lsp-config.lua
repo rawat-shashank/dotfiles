@@ -9,34 +9,14 @@ local tools = {
 return {
 	{
 		"mason-org/mason.nvim",
-		version = "^1.0.0",
-		config = function()
-			require("mason").setup({})
-		end,
-	},
-	{
 		"mason-org/mason-lspconfig.nvim",
-		version = "^1.0.0",
-		config = function()
-			require("mason-lspconfig").setup({
-				ensure_installed = servers,
-			})
-		end,
-	},
-	{
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
-		config = function()
-			require("mason-tool-installer").setup({
-				ensure_installed = tools,
-			})
-		end,
-	},
-	{
 		"neovim/nvim-lspconfig",
 		dependencies = {
 			{ "saghen/blink.cmp" },
 		},
 		config = function()
+			require("mason").setup({})
 			local lspconfig = require("lspconfig")
 			local capabilities = require("blink.cmp").get_lsp_capabilities()
 			local mason_lspconfig = require("mason-lspconfig")

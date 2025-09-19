@@ -8,4 +8,5 @@ sudo pacman -S --noconfirm --needed \
   nvim \
   syncthing \
   yazi \
+  fzf \
   tmux
