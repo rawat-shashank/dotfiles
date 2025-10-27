@@ -1,1 +1,6 @@
 source ~/.local/share/dotfiles/default/bash/prompt
+
+# for git branch name in git repo
+if [ -f /usr/share/git/completion/git-prompt.sh ]; then
+    source /usr/share/git/completion/git-prompt.sh
+fi
