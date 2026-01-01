@@ -9,4 +9,5 @@ sudo pacman -S --noconfirm --needed \
   syncthing \
   yazi \
   fzf \
-  tmux
+  tmux \
+	obsidian

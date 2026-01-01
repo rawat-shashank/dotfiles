@@ -13,7 +13,7 @@ keymap.set("i", "jk", "<ESC>", { noremap = true, silent = true, desc = "exit ins
 
 -- obsidian clock in and clock out
 vim.keymap.set("n", "<leader>ci", function()
-	vim.cmd("normal! A[clock::" .. os.date("%Y-%m-%dT%H:%M:%S") .. "")
+	vim.cmd("normal! A [clock::" .. os.date("%Y-%m-%dT%H:%M:%S") .. "")
 end, { desc = "[C]lock [I]n current date and time" })
 
 vim.keymap.set("n", "<leader>co", function()
