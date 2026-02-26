@@ -1,9 +1,10 @@
 return {
 	"obsidian-nvim/obsidian.nvim",
 	version = "*",
+  cmd = { "Obsidian" },
 	cond = function()
 		-- Replace with the absolute path to your vault
-		return vim.fn.getcwd() == vim.fn.expand("~/obsidian/docs")
+		return vim.fn.getcwd() == vim.fn.expand("~/dev/obsidian/docs")
 	end,
 	keys = {
 		{ "<leader>dn", "<cmd>Obsidian today<cr>", noremap = true, silent = true, desc = "[D]aily [N]otes" },
@@ -14,7 +15,7 @@ return {
 		workspaces = {
 			{
 				name = "personal",
-				path = "~/obsidian/docs/",
+				path = "~/dev/obsidian/docs/",
 			},
 		},
 		notes_subdir = "100 Inbox",

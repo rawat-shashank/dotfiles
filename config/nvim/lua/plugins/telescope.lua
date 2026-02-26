@@ -7,21 +7,24 @@ return {
 			"andrew-george/telescope-themes",
 		},
 		config = function()
+
+				local custom_ignore_pattern = { "node_modules", "build", "dist", ".git", ".venv" }
 			require("telescope").setup({
 				pickers = {
 					find_files = {
-						file_ignore_patterns = { "node_modules", ".git", ".venv" },
+						file_ignore_patterns = custom_ignore_pattern,
 						hidden = true,
+						no_ignore = true
 					},
 				},
 				live_grep = {
-					file_ignore_patterns = { "node_modules", ".git", ".venv" },
+					file_ignore_patterns = custom_ignore_pattern,
 					additional_args = function(_)
-						return { "--hidden" }
+						return { "--hidden", "--no_ignore" }
 					end,
 				},
 				extenstions = {
-					thems = {
+					themes = {
 						-- (boolean) -> show/hide previewer window
 						enable_previewer = true,
 
@@ -61,6 +64,35 @@ return {
 			vim.keymap.set("n", "<leader>sn", function()
 				builtin.find_files({ cwd = vim.fn.stdpath("config") })
 			end, { desc = "[S]earch [N]eovim files" })
+      
+      -- show all Incomplete tasks
+      vim.keymap.set("n", "<leader>tt", function()
+        builtin.grep_string({
+          prompt_title = "Incomplete Tasks",
+          search = "^\\s*- \\[ \\]",
+          search_dirs = {vim.fn.getcwd()},
+          use_regex = true,
+          additional_args = function()
+            return { "--no-ignore" }
+          end,
+        })
+      end, { desc = "[TT]asks" })
+
+      -- show all Complete tasks
+      vim.keymap.set("n", "<leader>tc", function()
+        builtin.grep_string({
+          prompt_title = "Complete Tasks",
+          search = "^\\s*- \\[x\\]",
+          search_dirs = {vim.fn.getcwd()},
+          use_regex = true,
+          additional_args = function()
+            return { "--no-ignore" }
+          end,
+        })
+      end, { desc = "[T]asks [C]ompleted" })
+
+
+
 		end,
 	},
 }
