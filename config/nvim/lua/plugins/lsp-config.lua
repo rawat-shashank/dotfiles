@@ -1,75 +1,90 @@
 local servers = {
 	"lua_ls",
+	"basedpyright",
+	"ruff",
+	-- Add more servers here, e.g., "pyright", "ts_ls"
 }
 
 local tools = {
 	"stylua",
+	"prettier",
+	-- Add more formatters/linter here
 }
 
 return {
 	{
-		"mason-org/mason.nvim",
-		"mason-org/mason-lspconfig.nvim",
-		"WhoIsSethDaniel/mason-tool-installer.nvim",
 		"neovim/nvim-lspconfig",
 		dependencies = {
-			{ "saghen/blink.cmp" },
+			"williamboman/mason.nvim",
+			"williamboman/mason-lspconfig.nvim",
+			"WhoIsSethDaniel/mason-tool-installer.nvim",
+			"saghen/blink.cmp",
 		},
 		config = function()
-			require("mason").setup({})
+			-- 1. Setup Mason
+			require("mason").setup()
+
+			-- 2. Setup Mason Tool Installer (for formatters/linters)
+			require("mason-tool-installer").setup({
+				ensure_installed = tools,
+			})
+
+			-- 3. Setup Mason-LSPConfig (for language servers)
 			local lspconfig = require("lspconfig")
 			local capabilities = require("blink.cmp").get_lsp_capabilities()
-			local mason_lspconfig = require("mason-lspconfig")
-			mason_lspconfig.setup_handlers({
-				function(server_name)
-					lspconfig[server_name].setup({
-						capabilities = capabilities,
-					})
-				end,
-				["lua_ls"] = function()
-					-- configure lua server (with special settings)
-					lspconfig["lua_ls"].setup({
-						capabilities = capabilities,
-						settings = {
-							Lua = {
-								-- make the language server recognize "vim" global
-								diagnostics = {
-									globals = { "vim" },
-								},
-								completion = {
-									callSnippet = "Replace",
+
+			require("mason-lspconfig").setup({
+				ensure_installed = servers, -- This actually installs the servers
+				handlers = {
+					-- Default handler for all servers
+					function(server_name)
+						lspconfig[server_name].setup({
+							capabilities = capabilities,
+						})
+					end,
+
+					-- Specific handler for lua_ls
+					["lua_ls"] = function()
+						lspconfig.lua_ls.setup({
+							capabilities = capabilities,
+							settings = {
+								Lua = {
+									diagnostics = { globals = { "vim" } },
+									completion = { callSnippet = "Replace" },
 								},
 							},
-						},
-					})
-				end,
+						})
+					end,
+				},
 			})
-			local keymap = vim.keymap
+
+			-- 4. Keymaps (LspAttach)
 			vim.api.nvim_create_autocmd("LspAttach", {
 				group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 				callback = function(ev)
-					-- Buffer local mappings.
-					-- See `:help vim.lsp.*` for documentation on any of the below functions
 					local opts = { buffer = ev.buf, silent = true }
+					local keymap = vim.keymap
 
-					-- set keybinds
-					opts.desc = "[G]oto [R]efernces"
+					opts.desc = "[G]oto [R]eferences"
 					keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
-					opts.desc = "[C]ode [r]ename"
-					keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
+
 					opts.desc = "[G]oto [D]efinition"
 					keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts)
+
 					opts.desc = "[G]oto [I]mplementations"
 					keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
+
 					opts.desc = "[C]ode [A]ctions"
 					keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-					opts.desc = "[R]estart LSP"
-					keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
-					opts.desc = "Show documentation for what is under cursor"
+
+					opts.desc = "[C]ode [r]ename"
+					keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
+
+					opts.desc = "Show documentation"
 					keymap.set("n", "K", vim.lsp.buf.hover, opts)
 
-					opts.desc = "[Open] [D]iagnostic in floating terminal"
-					vim.keymap.set("n", "<leader>od", vim.diagnostic.open_float, opts)
+					opts.desc = "Open Diagnostic float"
+					keymap.set("n", "<leader>od", vim.diagnostic.open_float, opts)
 				end,
 			})
 		end,
