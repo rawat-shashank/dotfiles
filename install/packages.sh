@@ -10,4 +10,6 @@ sudo pacman -S --noconfirm --needed \
   yazi \
   fzf \
   tmux \
-	obsidian
+	obsidian \
+  nvm \
+  uv
