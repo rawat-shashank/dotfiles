@@ -12,4 +12,5 @@ sudo pacman -S --noconfirm --needed \
   tmux \
 	obsidian \
   nvm \
-  uv
+  uv \
+  tree-sitter-cli

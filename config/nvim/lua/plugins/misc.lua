@@ -1,25 +1,34 @@
-return {
-	{
-		"christoomey/vim-tmux-navigator",
-	},
-	{
-		"folke/which-key.nvim",
-		event = "VeryLazy",
-		opts = {
-			---@type false | "classic" | "modern" | "helix"
+-- ==========================
+-- vim-tmux-navigator
+-- ==========================
+
+vim.pack.add({ "https://github.com/christoomey/vim-tmux-navigator" })
+vim.pack.add({ "https://github.com/echasnovski/mini.pairs" })
+
+-- ==========================
+-- folke/which-key
+-- ==========================
+
+vim.g.loaded_netrwPlugin = 1
+
+-- Defer loading until after Neovim fully paints the screen
+vim.api.nvim_create_autocmd("VimEnter", {
+	once = true,
+	callback = function()
+		-- Load plugins lazily
+		vim.pack.add({
+			{ src = "https://github.com/folke/which-key.nvim" },
+		})
+
+		-- Setup yazi configs
+		require("which-key").setup({
 			preset = "helix",
-			-- your configuration comes here
-			-- or leave it empty to use the default settings
-			-- refer to the configuration section below
-		},
-		keys = {
-			{
-				"<leader>?",
-				function()
-					require("which-key").show({ global = false })
-				end,
-				desc = "Buffer Local Keymaps (which-key)",
-			},
-		},
-	},
-}
+		})
+
+		-- Register Keymaps
+		local map = vim.keymap.set
+		map("n", "<leader>?", function()
+			require("which-key").show({ loop = false })
+		end, { desc = "(?) Buffer Local Keymaps (which-key)" })
+	end,
+})

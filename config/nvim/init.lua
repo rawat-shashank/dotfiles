@@ -1,6 +1,5 @@
-require("core.options")
-require("core.keymaps")
-require("core.autocommands")
-require("core.flashcard")
-require("config.lazy")
-require("current-theme")
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+require("config")
+require("plugins")

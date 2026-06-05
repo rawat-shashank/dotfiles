@@ -1,0 +1,8 @@
+require("plugins.blink")
+require("plugins.conform")
+require("plugins.yazi")
+require("plugins.misc")
+require("plugins.catppuccin")
+require("plugins.treesitter")
+require("plugins.telescope")
+require("plugins.obsidian")

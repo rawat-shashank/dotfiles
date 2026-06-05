@@ -1,44 +1,25 @@
----@type LazySpec
-return {
-	"mikavilpas/yazi.nvim",
-	version = "*", -- use the latest stable version
-	event = "VeryLazy",
-	dependencies = {
-		{ "nvim-lua/plenary.nvim", lazy = true },
-	},
-	keys = {
-		-- 👇 in this section, choose your own keymappings!
-		{
-			"\\",
-			mode = { "n", "v" },
-			"<cmd>Yazi<cr>",
-			desc = "Open yazi at the current file",
-		},
-		{
-			-- Open in the current working directory
-			"<leader>cw",
-			"<cmd>Yazi cwd<cr>",
-			desc = "Open the file manager in nvim's working directory",
-		},
-		{
-			"<c-up>",
-			"<cmd>Yazi toggle<cr>",
-			desc = "Resume the last yazi session",
-		},
-	},
-	---@type YaziConfig | {}
-	opts = {
-		-- if you want to open yazi instead of netrw, see below for more info
-		open_for_directories = true,
-		keymaps = {
-			show_help = "<f1>",
-		},
-	},
-	-- 👇 if you use `open_for_directories=true`, this is recommended
-	init = function()
-		-- mark netrw as loaded so it's not loaded at all.
-		--
-		-- More details: https://github.com/mikavilpas/yazi.nvim/issues/802
-		vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_netrwPlugin = 1
+
+-- Defer loading until after Neovim fully paints the screen
+vim.api.nvim_create_autocmd("VimEnter", {
+	once = true,
+	callback = function()
+		-- Load plugins lazily
+		vim.pack.add({
+			{ src = "https://github.com/nvim-lua/plenary.nvim" },
+			{ src = "https://github.com/mikavilpas/yazi.nvim" },
+		})
+
+		-- Setup yazi configs
+		require("yazi").setup({
+			open_for_directories = true,
+			keymaps = { show_help = "<f1>" },
+		})
+
+		-- Register Keymaps
+		local map = vim.keymap.set
+		map({ "n", "v" }, "\\", "<cmd>Yazi<cr>", { desc = "Open yazi" })
+		map("n", "<leader>cw", "<cmd>Yazi cwd<cr>", { desc = "Yazi in CWD" })
+		map("n", "<c-up>", "<cmd>Yazi toggle<cr>", { desc = "Resume last yazi" })
 	end,
-}
+})
