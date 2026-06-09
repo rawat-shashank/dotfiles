@@ -58,9 +58,6 @@ vim.keymap.set("n", "<leader>tt", function()
 		search = "^\\s*- \\[ \\]",
 		search_dirs = { vim.fn.getcwd() },
 		use_regex = true,
-		additional_args = function()
-			return { "--no-ignore" }
-		end,
 	})
 end, { desc = "[TT]asks" })
 
@@ -71,8 +68,5 @@ vim.keymap.set("n", "<leader>tc", function()
 		search = "^\\s*- \\[x\\]",
 		search_dirs = { vim.fn.getcwd() },
 		use_regex = true,
-		additional_args = function()
-			return { "--no-ignore" }
-		end,
 	})
 end, { desc = "[T]asks [C]ompleted" })
