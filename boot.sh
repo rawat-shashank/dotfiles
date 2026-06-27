@@ -21,7 +21,7 @@ DOTFILES_REPO="${DOTFILES_REPO:-rawat-shashank/dotfiles}"
 
 # echo -e "\nCloning Omarchy from: https://github.com/${DOTFILES_REPO}.git"
 rm -rf ~/.local/share/dotfiles/
-git clone "https://github.com/${DOTFILES_REPO}.git" ~/.local/share/dotfiles >/dev/null
+git clone "https://github.com/${DOTFILES_REPO}.git" $HOME/.local/share/dotfiles >/dev/null
 
 # Use custom branch if instructed, otherwise default to master
 DOTFILES_REF="${DOTFILES_REF:-main}"
