@@ -6,6 +6,7 @@ local M = {}
 
 M.opts = {
 	root_dir = vim.fn.expand("~/LifeOS"),
+	actions_dir = vim.fn.expand("~/LifeOS/20-29_Actions/"),
 	tasks_file = vim.fn.expand("~/LifeOS/20-29_Actions/21_Tasks/tasks.md"),
 	archive_file = vim.fn.expand("~/LifeOS/20-29_Actions/21_Tasks/archive.md"),
 }
@@ -37,9 +38,10 @@ function M.capture_task()
 		vim.ui.input({ prompt = "Tags (comma-separated, e.g. dev,work) [Optional]: " }, function(tags)
 			vim.ui.input({ prompt = "People (comma-separated, e.g. john,sarah) [Optional]: " }, function(people)
 				vim.ui.input({ prompt = "Priority (A/B/C) [Optional]: " }, function(prio)
-					vim.ui.input({ prompt = "Due Date (YYYY-MM-DD) [Optional]: " }, function(due)
+					vim.ui.input({ prompt = "Due Date (YYYY-MM-DD) [Leave blank for today]: " }, function(due)
 						vim.ui.input({ prompt = "Estimate (e.g. 2h, 45m) [Optional]: " }, function(est)
 							local task_str = "- [ ] "
+
 							if prio and prio ~= "" then
 								task_str = task_str .. "(" .. prio:upper() .. ") "
 							end
@@ -60,20 +62,24 @@ function M.capture_task()
 								end
 							end
 
+							-- Add Estimate
 							if est and est ~= "" then
 								task_str = task_str .. string.format(" ~(%s)", est)
 							end
 
-							if due and due ~= "" then
-								task_str = task_str .. string.format(" @due(%s)", due)
+							-- Due Date: Default to 7 days if blank, or use custom input
+							if due and vim.trim(due) == "" then
+								due = os.date("%Y-%m-%d", os.time() + 604800)
 							end
+
+							task_str = task_str .. string.format(" [due:: %s]", due)
 
 							ensure_dirs(M.opts.root_dir)
 							local file = io.open(M.opts.tasks_file, "a+")
 							if file then
 								file:write("\n" .. task_str)
 								file:close()
-								vim.notify("Captured task to " .. M.opts.tasks_file, vim.log.levels.INFO)
+								vim.notify("Captured: " .. task_str, vim.log.levels.INFO)
 							end
 						end)
 					end)
@@ -140,7 +146,7 @@ end
 --- Searches for tasks and populates categorized floating window
 ---@param completed boolean Whether to search for completed tasks
 ---@param title string Title of the floating window
----@param root_dir string Directory path to search tasks in
+
 local function list_tasks(completed, title, root_dir)
 	local buf, win = create_float(title)
 
@@ -155,6 +161,31 @@ local function list_tasks(completed, title, root_dir)
 		cmd = { "grep", "-rnE", "--exclude-dir=.git", "--exclude-dir=node_modules", "-e", task_str, base_dir }
 	end
 
+	-- local function list_tasks(completed, title)
+	-- 	local buf, win = create_float(title)
+	--
+	-- 	-- Regex pattern to match open, in-progress, or completed tasks
+	-- 	local task_str = completed and "^\\s*- \\[x\\]" or "^\\s*- \\[[ /]\\]"
+	--
+	-- 	local tasks_file = M.opts.tasks_file
+	-- 	local archive_file = M.opts.archive_file
+	--
+	-- 	local cmd
+	-- 	if vim.fn.executable("rg") == 1 then
+	-- 		cmd = { "rg", "--line-number", "--no-heading", "--color=never", "-e", task_str, tasks_file }
+	-- 	else
+	-- 		cmd = {
+	-- 			"grep",
+	-- 			"-rnE",
+	-- 			"--exclude-dir=.git",
+	-- 			"--exclude-dir=node_modules",
+	-- 			"-e",
+	-- 			task_str,
+	-- 			tasks_file,
+	-- 			archive_file,
+	-- 		}
+	-- 	end
+	--
 	vim.system(cmd, { text = true }, function(out)
 		local in_progress_tasks = {}
 		local overdue_tasks = {}
@@ -183,7 +214,8 @@ local function list_tasks(completed, title, root_dir)
 					local is_in_progress = content:match("^%s*- %[%/%]") ~= nil
 
 					if (completed and is_completed_task) or (not completed and not is_completed_task) then
-						local due_str = content:match("%[due::%s*(%d%d%d%d%-%d%d%-%d%d)%]")
+						local due_str = content:match("@due%(%s*(%d%d%d%d%-%d%d%-%d%d)%s*%)")
+							or content:match("%[due::%s*(%d%d%d%d%-%d%d%-%d%d)%]")
 							or content:match("📅%s*(%d%d%d%d%-%d%d%-%d%d)")
 
 						local due_time = parse_date(due_str)
@@ -273,7 +305,7 @@ end
 
 function M.open_tasks_popup()
 	ensure_dirs(M.opts.root_dir)
-	list_tasks(false, "LifeOS Tasks", M.opts.root_dir)
+	list_tasks(false, "LifeOS Pending Tasks", M.opts.actions_dir)
 end
 
 -------------------------------------------------------------------------------
