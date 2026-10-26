@@ -146,6 +146,9 @@ local function load_and_setup_obsidian()
 		require("obsidian-flashcards").start()
 	end, { desc = "[f]lash [c]ards", noremap = true, silent = true })
 
+	-- Initialize macros
+	require("lifeos.macros").setup()
+
 	-- LifeOS Journal Enhancements (FitNotes, Macros, Quick Links)
 	-- 1. Import FitNotes (Auto-detects date from header, creates/opens correct daily note)
 	vim.keymap.set("n", "<leader>fn", function()

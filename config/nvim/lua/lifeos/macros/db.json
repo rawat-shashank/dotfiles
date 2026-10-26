@@ -1,0 +1,12 @@
+{
+  "banana": { "kcal": 89, "p": 1.1, "c": 22.8, "f": 0.3 },
+  "chappati": { "kcal": 297, "p": 11.0, "c": 46.0, "f": 7.0 },
+  "instant_noodles": { "kcal": 450, "p": 9.0, "c": 60.0, "f": 19.0 },
+  "peanut_butter": { "kcal": 588, "p": 25.0, "c": 20.0, "f": 50.0 },
+  "egg": { "kcal": 143, "p": 12.6, "c": 0.7, "f": 9.5 },
+  "Yogurt": { "kcal": 70, "p": 12.5, "c": 3.4, "f": 0.3 },
+  "sweet corn": { "kcal": 96, "p": 3.4, "c": 21, "f": 1.5 },
+  "Chilli Peanuts": { "kcal": 457, "p": 13.7, "c": 58.8, "f": 19.8 },
+  "Black Coffee": { "kcal": 2, "p": 0.3, "c": 0.2, "f": 0.0 },
+  "Coffee with Milk": { "kcal": 35, "p": 2.0, "c": 3.0, "f": 1.5 }
+}
