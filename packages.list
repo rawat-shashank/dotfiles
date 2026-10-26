@@ -1,0 +1,16 @@
+# Development Core
+neovim
+tmux
+xclip
+varlad/yazi:cargo:yazi-fm:yazi
+nodejs
+npm
+
+# Shell Utilities
+fzf
+git
+ripgrep
+syncthing
+# awk is required for git branch and other commands
+gawk
+

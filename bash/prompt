@@ -1,0 +1,6 @@
+# Technicolor dreams
+force_color_prompt=yes
+color_prompt=yes
+
+# Simple prompt with path in the window/pane title and caret for typing line
+PS1='\e[32m\u@\h\[\e[0m\]:\e[34m\w\[\e[0m\] \e[33m$(__git_ps1 " %s")\[\e[0m\] \n\$ '

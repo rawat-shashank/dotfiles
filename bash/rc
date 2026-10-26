@@ -1,0 +1,23 @@
+# Sourced by interactive bash shells
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# Source all modular configuration files in order
+if [[ -d "${HOME}/.config/bash/conf.d" ]]; then
+    for file in "${HOME}/.config/bash/conf.d/"*.bash; do
+        [[ -r "$file" ]] && source "$file"
+    done
+    unset file
+fi
+
+# DevContainer Podman Integration
+export DEVCONTAINER_DOCKER_PATH=podman
+alias devcontainer='devcontainer --docker-path podman'
+
+#switch default editor to neovim
+export EDITOR="nvim"
+export VISUAL="nvim"

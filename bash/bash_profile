@@ -1,0 +1,5 @@
+# Sourced by login bash shells
+
+if [[ -f "${HOME}/.bashrc" ]]; then
+    source "${HOME}/.bashrc"
+fi
