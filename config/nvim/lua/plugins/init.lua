@@ -70,6 +70,8 @@ require("conform").setup({
 		lua = { "stylua" },
 		javascript = { "prettier" },
 		typescript = { "prettier" },
+		json = { "prettier" },
+		markdown = { "prettier" },
 	},
 })
 
