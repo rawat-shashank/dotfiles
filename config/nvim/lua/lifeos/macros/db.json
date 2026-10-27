@@ -8,5 +8,11 @@
   "sweet corn": { "kcal": 96, "p": 3.4, "c": 21, "f": 1.5 },
   "Chilli Peanuts": { "kcal": 457, "p": 13.7, "c": 58.8, "f": 19.8 },
   "Black Coffee": { "kcal": 2, "p": 0.3, "c": 0.2, "f": 0.0 },
-  "Coffee with Milk": { "kcal": 35, "p": 2.0, "c": 3.0, "f": 1.5 }
+  "Coffee with Milk": { "kcal": 35, "p": 2.0, "c": 3.0, "f": 1.5 },
+  "Spiced Cottage Cheese & Soya Bowl (per 100g)": {
+    "kcal": 67,
+    "p": 9.8,
+    "c": 4.3,
+    "f": 0.6
+  }
 }

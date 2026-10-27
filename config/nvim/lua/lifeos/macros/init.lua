@@ -49,42 +49,39 @@ local function update_food_intake_section(bufnr, new_item_line)
 		end
 	end
 
-	local items = {}
+	-- Preserve all existing lines within the section
+	local section_lines = {}
 	for i = header_idx + 1, section_end_idx do
-		local line = lines[i]
-		if line:match("^%s*%- %[.%]") then
-			table.insert(items, line)
+		table.insert(section_lines, lines[i])
+	end
+
+	-- Find the last checklist item in the section to append after it
+	local last_item_idx = nil
+	for i = #section_lines, 1, -1 do
+		if section_lines[i]:match("^%s*%- %[.%]") then
+			last_item_idx = i
+			break
 		end
 	end
 
-	table.insert(items, new_item_line)
-
-	local total_kcal = 0
-	local total_p = 0.0
-	local total_c = 0.0
-	local total_f = 0.0
-
-	for _, item in ipairs(items) do
-		local kcal_str, p_str, c_str, f_str = item:match("%((%d+) kcal | ([%d%.]+)P\\([%d%.]+)C\\([%d%.]+)F%)")
-		if kcal_str then
-			total_kcal = total_kcal + tonumber(kcal_str)
-			total_p = total_p + tonumber(p_str)
-			total_c = total_c + tonumber(c_str)
-			total_f = total_f + tonumber(f_str)
-		end
+	if last_item_idx then
+		-- Insert the new item directly after the last checklist item without adding extra blank lines
+		table.insert(section_lines, last_item_idx + 1, new_item_line)
+	else
+		-- If no items exist yet, add it to the top of the section
+		table.insert(section_lines, 1, new_item_line)
 	end
 
-	local new_header =
-		string.format("## Food Intake - (%d | %.0fP\\%.0fC\\%.0fF)", total_kcal, total_p, total_c, total_f)
-
+	-- Reconstruct the buffer lines
 	local new_lines = {}
-	for i = 1, header_idx - 1 do
+	for i = 1, header_idx do
 		table.insert(new_lines, lines[i])
 	end
-	table.insert(new_lines, new_header)
-	for _, item in ipairs(items) do
-		table.insert(new_lines, item)
+
+	for _, line in ipairs(section_lines) do
+		table.insert(new_lines, line)
 	end
+
 	for i = section_end_idx + 1, #lines do
 		table.insert(new_lines, lines[i])
 	end
