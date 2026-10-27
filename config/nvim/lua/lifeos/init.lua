@@ -39,7 +39,17 @@ local opts = {
 			local path_str = tostring(note.path or "")
 			if path_str:match("12_Journal") then
 				-- Dynamically inject the day property for daily notes
-				out.day = os.date("%A")
+				-- out.day = os.date("%A")
+				local filename = note.filename or vim.fs.basename(path_str)
+				local y, m, d = filename:match("(%d%d%d%d)%-(%d%d)%-(%d%d)")
+
+				if y and m and d then
+					local file_time = os.time({ year = tonumber(y), month = tonumber(m), day = tonumber(d) })
+					out.day = os.date("%A", file_time)
+				else
+					-- Fallback to current system day if no date found in filename
+					out.day = os.date("%A")
+				end
 			end
 
 			return out
@@ -86,10 +96,10 @@ local function load_and_setup_obsidian()
 
 	local obsidian = require("obsidian")
 	obsidian.setup(opts)
-	vim.keymap.set("n", "<leader>cj", "<cmd>Obsidian today<cr>", {
+	vim.keymap.set("n", "<leader>dj", "<cmd>Obsidian today<cr>", {
 		noremap = true,
 		silent = true,
-		desc = "[c]apture [j]ournal",
+		desc = "[d]aily [j]ournal",
 	})
 
 	-- Notes keympas
@@ -149,76 +159,8 @@ local function load_and_setup_obsidian()
 	-- Initialize macros
 	require("lifeos.macros").setup()
 
-	-- LifeOS Journal Enhancements (FitNotes, Macros, Quick Links)
-	-- 1. Import FitNotes (Auto-detects date from header, creates/opens correct daily note)
-	vim.keymap.set("n", "<leader>fn", function()
-		local clip = vim.fn.getreg("+")
-		if not clip or clip == "" then
-			vim.notify("Error: System clipboard is empty!", vim.log.levels.ERROR, { title = "LifeOS" })
-			return
-		end
-
-		local options = {
-			"Upper (A) - (Strength Focus) 💪",
-			"Lower (A) - (Quad Focus) 🦵",
-			"Upper (B) - (Hypertrophy Focus) 🏋️‍♀️",
-			"Lower (B) - (Posterior Focus) 🦵",
-			"Specialization",
-		}
-
-		vim.ui.select(options, {
-			prompt = "Select Workout Routine:",
-		}, function(choice)
-			if not choice then
-				return
-			end
-
-			local script_path = vim.fn.expand(root_dir .. "/00-09_Support/03_Scripts/fitnotes_parser.py")
-			local python_bin = vim.fn.expand(root_dir .. "/00-09_Support/03_Scripts/venv/bin/python")
-			local tmp_file = vim.fn.tempname()
-
-			local f = io.open(tmp_file, "w")
-			if f then
-				f:write(clip)
-				f:close()
-			end
-
-			local journal_dir = vim.fn.expand(root_dir .. "/10-19_Inbox_&_Journals/12_Journal")
-			local cmd = string.format(
-				"%s %s %s %s %s",
-				vim.fn.shellescape(python_bin),
-				vim.fn.shellescape(script_path),
-				vim.fn.shellescape(tmp_file),
-				vim.fn.shellescape(journal_dir),
-				vim.fn.shellescape(choice)
-			)
-
-			local output = vim.fn.system(cmd)
-			vim.fn.delete(tmp_file)
-
-			local target_file = ""
-			for line in output:gmatch("[^\r\n]+") do
-				if line:match("%.md$") then
-					target_file = line
-				end
-			end
-
-			if target_file ~= "" and vim.fn.filereadable(target_file) == 1 then
-				vim.cmd("edit " .. vim.fn.fnameescape(target_file))
-				vim.notify(
-					"Imported workout for " .. vim.fn.fnamemodify(target_file, ":t:r"),
-					vim.log.levels.INFO,
-					{ title = "LifeOS FitNotes" }
-				)
-			else
-				vim.notify(
-					"Workout imported, but failed to open file.",
-					vim.log.levels.WARN,
-					{ title = "LifeOS FitNotes" }
-				)
-			end
-		end)
-	end, { desc = "LifeOS: Import [f]it[n]otes with date auto-detection" })
+	-- LifeOS Enhancements: Import FitNotes Natively
+	require("lifeos.workout").setup({ root_dir = root_dir })
 end
 
 -- Replicates Lazy's lazyload `cond` and `cmd` parameters
