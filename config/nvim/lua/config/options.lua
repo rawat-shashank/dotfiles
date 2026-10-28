@@ -63,17 +63,24 @@ opt.foldminlines = 1
 -- Set global fold symbols & vertical connecting line
 vim.opt.fillchars:append({
 	fold = " ", -- Fill remaining space on folded lines with blank spaces
-	foldopen = "-", -- Icon when fold is open
-	foldclose = "+", -- Icon when fold is closed
+	foldopen = "", -- Icon when fold is open
+	foldclose = "", -- Icon when fold is closed
 	foldsep = "│", -- Vertical side line connecting open fold levels
 })
 
 -- Custom fold text function to format closed fold lines cleanly
-local function custom_fold_text()
+function _G.custom_fold_text()
 	local line = vim.fn.getline(vim.v.foldstart)
 	local line_count = vim.v.foldend - vim.v.foldstart + 1
+
 	line = line:gsub("\t", string.rep(" ", vim.opt.tabstop:get()))
-	return string.format("▶ %s  ··· (%d lines)", vim.trim(line), line_count)
+
+	return {
+		{ line, "Normal" }, -- Main line in normal color
+		{ " ... (" .. line_count .. " lines) ", "NonText" }, -- Muted text color check :highlight text
+	}
 end
 
-vim.opt.foldtext = custom_fold_text()
+vim.opt.foldtext = "v:lua.custom_fold_text()"
+-- remove bg hightlight from folds
+vim.api.nvim_set_hl(0, "Folded", { bg = "NONE" })
