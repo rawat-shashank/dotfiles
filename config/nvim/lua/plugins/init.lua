@@ -82,5 +82,24 @@ require("mason-conform").setup({
 
 require("catppuccin").setup({
 	transparent_background = false,
+	custom_highlights = function(colors)
+		return {
+			-- Treesitter Heading Highlights (Neovim 0.9+)
+			["@markup.heading.1.markdown"] = { fg = colors.red, bold = true, style = { "bold" } },
+			["@markup.heading.2.markdown"] = { fg = colors.peach, bold = true },
+			["@markup.heading.3.markdown"] = { fg = colors.yellow, bold = true },
+			["@markup.heading.4.markdown"] = { fg = colors.green, bold = true },
+			["@markup.heading.5.markdown"] = { fg = colors.blue, bold = true },
+			["@markup.heading.6.markdown"] = { fg = colors.lavender, bold = true },
+
+			-- Standard Vim Regex Highlights (Fallback for non-treesitter)
+			markdownH1 = { fg = colors.red, bold = true },
+			markdownH2 = { fg = colors.peach, bold = true },
+			markdownH3 = { fg = colors.yellow, bold = true },
+			markdownH4 = { fg = colors.green, bold = true },
+			markdownH5 = { fg = colors.blue, bold = true },
+			markdownH6 = { fg = colors.lavender, bold = true },
+		}
+	end,
 })
 vim.cmd.colorscheme("catppuccin-mocha")

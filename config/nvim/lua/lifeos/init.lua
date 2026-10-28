@@ -82,7 +82,7 @@ local opts = {
 	end,
 
 	checkbox = {
-		order = { " ", "/", "x", "-" },
+		order = { " ", "/", "x", "-", "?" },
 	},
 	picker = {
 		name = "fzf-lua",
@@ -136,12 +136,9 @@ local function load_and_setup_obsidian()
 		tasks.open_tasks_popup,
 		{ desc = "[s]earch [t]tasks (FZF)", noremap = true, silent = true }
 	)
-	vim.keymap.set(
-		"n",
-		"<leader>tt",
-		tasks.cycle_task_state,
-		{ desc = "[t]ask Cycle State", noremap = true, silent = true }
-	)
+	vim.keymap.set("n", "<leader>ci", tasks.clock_in, { desc = "[c]lock [i]n", noremap = true, silent = true })
+	vim.keymap.set("n", "<leader>co", tasks.clock_out, { desc = "[c]lock [o]ut", noremap = true, silent = true })
+
 	vim.keymap.set(
 		"n",
 		"<leader>ta",
