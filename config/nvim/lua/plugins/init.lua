@@ -41,7 +41,10 @@ vim.pack.add({
 	-- Misc
 	{ src = "https://github.com/christoomey/vim-tmux-navigator" },
 	{ src = "https://github.com/folke/which-key.nvim" },
+	{ src = "https://github.com/kdheepak/lazygit.nvim" },
 })
+
+vim.keymap.set("n", "<Leader>lg", "<cmd>LazyGit<CR>", { desc = "Open [l]azy [g]it" })
 
 -------------------------------------------------------------------------------
 -- 2. Plugin Setup
