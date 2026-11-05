@@ -11,6 +11,7 @@ require("config.keymaps")
 require("config.autocmds")
 require("config.statusline")
 require("config.lsp")
+require("config.diagnostic")
 
 -- person plugins
 require("lifeos")
