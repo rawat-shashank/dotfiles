@@ -58,6 +58,7 @@ main() {
   detect_os
   load_and_process_packages "${PACKAGE_FILE}"
   install_packages
+  deploy_dotfiles
 
   # setup bash and bashrc
   setup_bash_config
