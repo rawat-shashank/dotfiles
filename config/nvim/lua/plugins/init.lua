@@ -19,12 +19,10 @@ vim.pack.add({
 		build = "cargo build --release",
 	},
 
-	-- Mason & Integrations
+	-- Mason & Integrations, Formatting & LSP
 	{ src = "https://github.com/williamboman/mason.nvim" },
 	{ src = "https://github.com/williamboman/mason-lspconfig.nvim" },
 	{ src = "https://github.com/zapling/mason-conform.nvim" },
-
-	-- Formatting & LSP
 	{ src = "https://github.com/stevearc/conform.nvim" },
 	{ src = "https://github.com/neovim/nvim-lspconfig" },
 
@@ -75,6 +73,7 @@ require("conform").setup({
 		typescript = { "prettier" },
 		json = { "prettier" },
 		markdown = { "prettier" },
+		svelte = { "prettier" },
 	},
 })
 
