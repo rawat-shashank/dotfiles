@@ -28,28 +28,38 @@
 -- ============================================================================
 
 local M = {}
+local config = require("lifeos.config")
 
 M.opts = {
-	root_dir = vim.fn.expand("~/LifeOS"),
-	actions_dir = vim.fn.expand("~/LifeOS/20-29_Actions/"),
-	tasks_file = vim.fn.expand("~/LifeOS/20-29_Actions/21_Tasks/tasks.md"),
-	archive_file = vim.fn.expand("~/LifeOS/20-29_Actions/21_Tasks/archive.md"),
+	root_dir = config.paths.expanded_root,
+	actions_dir = config.paths.actions_dir,
+	tasks_file = config.paths.tasks_file,
+	archive_file = config.paths.archive_file,
 }
 
 -------------------------------------------------------------------------------
 -- HELPERS
 -------------------------------------------------------------------------------
 
+--- Ensures that a directory path exists on disk, creating parent directories if needed.
+--- @param path string Target directory path.
+--- @return nil
 local function ensure_dirs(path)
 	vim.fn.mkdir(path, "p")
 end
 
+--- Calculates the leading indentation level (number of spaces) of a given line.
+--- @param line string The target line string.
+--- @return number indent Number of leading whitespace characters.
 local function get_indent_level(line)
 	local indent = line:match("^(%s*)")
 	return #indent
 end
 
---- Adds a recurrence interval to a given date string or current time
+--- Calculates the next due date string based on an existing due date and recurrence rule.
+--- @param current_due_str string Current due date string (`YYYY-MM-DD`).
+--- @param rec_rule string Recurrence rule configuration string.
+--- @return string next_due Calculated future due date string (`YYYY-MM-DD`).
 local function calculate_next_due(current_due_str, rec_rule)
 	rec_rule = vim.trim(rec_rule:lower())
 
@@ -105,8 +115,6 @@ local function calculate_next_due(current_due_str, rec_rule)
 	end
 
 	-- 4. Fallback to your original relative offset parser (+1w, +2d, etc.)
-	-- (Your existing sign/num/unit logic goes here)
-	-- Match rule format: [rec:: +1w], [rec:: !1m], [rec:: 2d], etc.
 	local sign, num_str, unit = rec_rule:match("([+!]?)(%d+)([dwmy])")
 	if not num_str or not unit then
 		return current_due_str
@@ -203,9 +211,10 @@ function M.capture_task()
 	end)
 end
 
---- Creates a centered floating window with manual folding
----@param title string The title of the window
----@return integer buf, integer win
+--- Creates a centered floating window with manual folding and keymaps for exiting.
+--- @param title string The title to display centered at the top of the float.
+--- @return integer buf Created buffer handle.
+--- @return integer win Created window handle.
 local function create_float(title)
 	local width = math.floor(vim.o.columns * 0.8)
 	local height = math.floor(vim.o.lines * 0.8)
@@ -245,7 +254,9 @@ local function create_float(title)
 	return buf, win
 end
 
---- Parses date strings (YYYY-MM-DD) into time seconds
+--- Parses a date string (`YYYY-MM-DD`) into Unix time seconds.
+--- @string? date_str Target date string to parse.
+--- @return integer? timestamp Corresponding epoch time seconds, or nil on failure.
 local function parse_date(date_str)
 	if not date_str then
 		return nil
@@ -260,9 +271,55 @@ end
 --- Searches for tasks and populates categorized floating window
 ---@param completed boolean Whether to search for completed tasks
 ---@param title string Title of the floating window
-
+---@string? root_dir Optional root directory path to search within.
+--- @return nil
 local function list_tasks(completed, title, root_dir)
 	local buf, win = create_float(title)
+
+	-- Helper to parse priority weights (lower number = higher priority)
+	local function parse_priority(content)
+		-- Matches - [ ] (A) or similar variations with parentheses
+		local p = content:match("%-%s*%[[^%]]+%s*%(([%a])%)") or content:match("%(([A-Ca-c])%)")
+
+		if p then
+			p = p:upper()
+			if p == "A" then
+				return 1
+			end
+			if p == "B" then
+				return 2
+			end
+			if p == "C" then
+				return 3
+			end
+		end
+		return 4 -- Default / no priority
+	end
+
+	-- Comparator function to sort tasks by due date, then priority, then file/line
+	local function compare_tasks(a, b)
+		-- 1. Compare due times (earlier first; nil/missing due time goes last)
+		if a.due_time and b.due_time then
+			if a.due_time ~= b.due_time then
+				return a.due_time < b.due_time
+			end
+		elseif a.due_time and not b.due_time then
+			return true
+		elseif not a.due_time and b.due_time then
+			return false
+		end
+
+		-- 2. Compare priorities (lower priority number comes first)
+		if a.priority ~= b.priority then
+			return a.priority < b.priority
+		end
+
+		-- 3. Stable fallback sort by file path and line number
+		if a.file ~= b.file then
+			return a.file < b.file
+		end
+		return a.lnum < b.lnum
+	end
 
 	-- Regex pattern to match open, in-progress, or completed tasks
 	local task_str = completed and "^\\s*- \\[x\\]" or "^\\s*- \\[[ /]\\]"
@@ -275,31 +332,6 @@ local function list_tasks(completed, title, root_dir)
 		cmd = { "grep", "-rnE", "--exclude-dir=.git", "--exclude-dir=node_modules", "-e", task_str, base_dir }
 	end
 
-	-- local function list_tasks(completed, title)
-	-- 	local buf, win = create_float(title)
-	--
-	-- 	-- Regex pattern to match open, in-progress, or completed tasks
-	-- 	local task_str = completed and "^\\s*- \\[x\\]" or "^\\s*- \\[[ /]\\]"
-	--
-	-- 	local tasks_file = M.opts.tasks_file
-	-- 	local archive_file = M.opts.archive_file
-	--
-	-- 	local cmd
-	-- 	if vim.fn.executable("rg") == 1 then
-	-- 		cmd = { "rg", "--line-number", "--no-heading", "--color=never", "-e", task_str, tasks_file }
-	-- 	else
-	-- 		cmd = {
-	-- 			"grep",
-	-- 			"-rnE",
-	-- 			"--exclude-dir=.git",
-	-- 			"--exclude-dir=node_modules",
-	-- 			"-e",
-	-- 			task_str,
-	-- 			tasks_file,
-	-- 			archive_file,
-	-- 		}
-	-- 	end
-	--
 	vim.system(cmd, { text = true }, function(out)
 		local in_progress_tasks = {}
 		local overdue_tasks = {}
@@ -333,7 +365,14 @@ local function list_tasks(completed, title, root_dir)
 							or content:match("📅%s*(%d%d%d%d%-%d%d%-%d%d)")
 
 						local due_time = parse_date(due_str)
-						local item = { file = file, lnum = tonumber(lnum), text = "  " .. clean_task }
+						local priority = parse_priority(content)
+						local item = {
+							file = file,
+							lnum = tonumber(lnum),
+							text = "  " .. clean_task,
+							due_time = due_time,
+							priority = priority,
+						}
 
 						if is_in_progress then
 							table.insert(in_progress_tasks, item)
@@ -354,6 +393,13 @@ local function list_tasks(completed, title, root_dir)
 				end
 			end
 		end
+
+		-- Sort each section using the custom comparator
+		table.sort(in_progress_tasks, compare_tasks)
+		table.sort(overdue_tasks, compare_tasks)
+		table.sort(today_tasks, compare_tasks)
+		table.sort(week_tasks, compare_tasks)
+		table.sort(other_tasks, compare_tasks)
 
 		vim.schedule(function()
 			if not vim.api.nvim_buf_is_valid(buf) then
@@ -417,6 +463,8 @@ local function list_tasks(completed, title, root_dir)
 	end)
 end
 
+--- Opens the categorized FZF popup displaying active pending tasks.
+--- @return nil
 function M.open_tasks_popup()
 	ensure_dirs(M.opts.root_dir)
 	list_tasks(false, "LifeOS Pending Tasks", M.opts.actions_dir)
@@ -528,33 +576,6 @@ function M.clock_out()
 	end
 end
 
--- 2. CLOCK OUT (<leader>co)
--- function M.clock_out()
--- 	local line = vim.api.nvim_get_current_line()
---
--- 	if not line:match("%- %[[%s%w%/%-%?]%]") then
--- 		vim.notify("No valid task checkbox found on line.", vim.log.levels.WARN)
--- 		return
--- 	end
---
--- 	-- Switch checkbox state to Complete [x]
--- 	line = line:gsub("%- %[ %]", "- [x]")
--- 	line = line:gsub("%- %[%/%]", "- [x]")
--- 	line = line:gsub("%- %[%-%]", "- [x]")
--- 	line = line:gsub("%- %[%?%]", "- [x]")
---
--- 	-- Complete the open clock tag: change latest `[clock::...` to `[clock::...--timestamp]`
--- 	if line:match("%[clock::[^%]]+$") or line:match("%[clock::[^%]]-%s*$") then
--- 		line = line .. string.format("--%s]", get_iso_time())
--- 	else
--- 		-- Fallback: if user clocks out without a prior clock-in on this line
--- 		line = line .. string.format(" [clock::%s]", get_iso_time())
--- 	end
---
--- 	vim.api.nvim_set_current_line(line)
--- 	vim.cmd("silent! update")
--- end
---
 -------------------------------------------------------------------------------
 -- 3. TASK ARCHIVING
 -------------------------------------------------------------------------------
@@ -563,42 +584,95 @@ end
 function M.archive_finished_tasks()
 	ensure_dirs(M.opts.root_dir)
 	local buf = vim.api.nvim_get_current_buf()
+	local cursor = vim.api.nvim_win_get_cursor(0)
+	local cursor_row = cursor[1]
 	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
-	local keep_lines = {}
-	local archive_lines = {}
-	local archiving = false
-	local current_indent = 0
+	if #lines == 0 then
+		vim.notify("Buffer is empty.", vim.log.levels.INFO)
+		return
+	end
 
-	for _, line in ipairs(lines) do
+	-- 1. Identify all task blocks in the buffer
+	local task_blocks = {}
+	for i = 1, #lines do
+		local line = lines[i]
 		local is_task = line:match("%- %[[%s%w%/%-%?]%]")
-		local indent = get_indent_level(line)
-
 		if is_task then
-			if line:match("%- %[x%]") or line:match("%- %[%-%]") then
-				archiving = true
-				current_indent = indent
-				table.insert(archive_lines, line)
-			elseif indent > current_indent and archiving then
-				table.insert(archive_lines, line)
-			else
-				archiving = false
-				table.insert(keep_lines, line)
+			local indent = get_indent_level(line)
+			local start_idx = i
+			local end_idx = i
+
+			-- Find the end of this task block (handling indented subtasks/details and internal blank lines)
+			for j = i + 1, #lines do
+				local line_j = lines[j]
+				local is_blank = line_j:match("^%s*$")
+				local j_indent = get_indent_level(line_j)
+
+				if is_blank then
+					-- Check if this blank line is followed by another valid subtask/comment in this block
+					local has_subsequent_block_line = false
+					for k = j + 1, #lines do
+						local line_k = lines[k]
+						if not line_k:match("^%s*$") then
+							if get_indent_level(line_k) > indent then
+								has_subsequent_block_line = true
+							end
+							break
+						end
+					end
+					if has_subsequent_block_line then
+						end_idx = j
+					else
+						break
+					end
+				elseif j_indent > indent then
+					end_idx = j
+				else
+					break
+				end
 			end
-		elseif archiving and indent > current_indent then
+
+			table.insert(task_blocks, {
+				start_line = start_idx,
+				end_line = end_idx,
+			})
+		end
+	end
+
+	-- 2. Find the task block containing the cursor (innermost task if nested)
+	local target_block = nil
+	for _, block in ipairs(task_blocks) do
+		if cursor_row >= block.start_line and cursor_row <= block.end_line then
+			if not target_block or block.start_line > target_block.start_line then
+				target_block = block
+			end
+		end
+	end
+
+	if not target_block then
+		vim.notify("No task found under the cursor to archive.", vim.log.levels.INFO)
+		return
+	end
+
+	-- 3. Separate target task lines from the rest of the buffer
+	local archive_lines = {}
+	local keep_lines = {}
+
+	for i, line in ipairs(lines) do
+		if i >= target_block.start_line and i <= target_block.end_line then
 			table.insert(archive_lines, line)
 		else
-			archiving = false
 			table.insert(keep_lines, line)
 		end
 	end
 
 	if #archive_lines == 0 then
-		vim.notify("No completed/cancelled tasks to archive.", vim.log.levels.INFO)
+		vim.notify("No lines to archive.", vim.log.levels.INFO)
 		return
 	end
 
-	-- Write to Archive.md
+	-- 4. Write to Archive.md
 	local a_file = io.open(M.opts.archive_file, "a+")
 	if a_file then
 		a_file:write(string.format("\n\n## Archived on %s\n", os.date("%Y-%m-%d %H:%M")))
@@ -606,11 +680,21 @@ function M.archive_finished_tasks()
 			a_file:write(l .. "\n")
 		end
 		a_file:close()
+	else
+		vim.notify("Failed to open archive file: " + tostring(M.opts.archive_file), vim.log.levels.ERROR)
+		return
 	end
 
-	-- Update buffer
+	-- 5. Update buffer and adjust cursor position
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, keep_lines)
-	vim.notify(string.format("Archived %d lines to Archive.md", #archive_lines), vim.log.levels.INFO)
+
+	local new_line_count = #keep_lines
+	if new_line_count > 0 then
+		local new_row = math.min(target_block.start_line, new_line_count)
+		vim.api.nvim_win_set_cursor(0, { new_row, cursor[2] })
+	end
+
+	vim.notify(string.format("Archived task (%d lines) to Archive.md", #archive_lines), vim.log.levels.INFO)
 end
 
 -------------------------------------------------------------------------------

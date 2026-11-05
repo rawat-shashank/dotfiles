@@ -1,7 +1,40 @@
+-- ============================================================================
+-- LifeOS Module: Nutrients & Macro Tracking
+-- ============================================================================
+-- DOCUMENTATION & SPECIFICATION:
+--
+-- 1. Overview & Functionality:
+--    - Manages food intake and macro tracking inside Neovim buffers.
+--    - Loads a nutrient database from JSON (`db.json`).
+--    - Provides an `fzf-lua` picker to search food items and compute macros based on user-entered weight.
+--    - Automatically appends formatted checklist items into the current buffer's `## Food Intake` section.
+--
+-- 2. Dependencies:
+--    - fzf-lua
+--
+-- 3. Usage Examples & Commands:
+--    - Initialize the plugin in your Neovim configuration:
+--      `require("lifeos.macros").setup()`
+--    - Manually trigger the macro capture prompt in Normal mode:
+--      `:lua require("lifeos.macros").search()`
+--    - Default Keymap:
+--      `<leader>cm` ([c]apture [m]acros)
+--
+-- 4. Example JSON Database Format (`db.json`):
+--    ```json
+--    {
+--      "chicken_breast": { "kcal": 165, "p": 31.0, "c": 0.0, "f": 3.6 },
+--      "white_rice": { "kcal": 130, "p": 2.7, "c": 28.0, "f": 0.3 }
+--    }
+--    ```
+-- ============================================================================
+
 local M = {}
 
 local db_path = vim.fn.stdpath("config") .. "/lua/lifeos/macros/db.json"
 
+--- Loads and decodes the nutrient database JSON file from disk.
+--- @return table? db Decoded table containing food nutrient definitions, or nil on failure.
 local function load_db()
 	local file = io.open(db_path, "r")
 	if not file then
@@ -13,6 +46,11 @@ local function load_db()
 	return vim.json.decode(content)
 end
 
+--- Calculates total calories and macronutrients (protein, carbs, fats) for a given food item weight.
+--- @param item string Internal key name of the food item.
+--- @param data table Nutrient data table per 100g (kcal, p, c, f).
+--- @param weight number Weight of the food item in grams.
+--- @return string formatted_line Formatted markdown checklist item string.
 local function calculate_macros(item, data, weight)
 	local factor = weight / 100
 	local kcal = math.floor((data.kcal * factor) + 0.5)
@@ -24,6 +62,10 @@ local function calculate_macros(item, data, weight)
 	return string.format("- [x] 1 %s - %gg - (%d kcal | %sP\\%sC\\%sF)", display_name, weight, kcal, p, c, f)
 end
 
+--- Updates the `## Food Intake` section in the target buffer by inserting the new food entry line.
+--- @param bufnr? integer Buffer handle number (defaults to 0 for current buffer).
+--- @string new_item_line Formatted checklist string line to insert.
+--- @return nil
 local function update_food_intake_section(bufnr, new_item_line)
 	bufnr = bufnr or 0
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -89,6 +131,8 @@ local function update_food_intake_section(bufnr, new_item_line)
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
 end
 
+--- Opens an `fzf-lua` picker to search food items, prompts for weight, and updates the food intake section.
+--- @return nil
 function M.search()
 	local fzf = require("fzf-lua")
 
@@ -158,9 +202,9 @@ end
 function M.setup(opts)
 	opts = opts or {}
 
-	vim.keymap.set("n", "<leader>cm", function()
+	vim.api.nvim_create_user_command("LifeMacroSearch", function()
 		M.search()
-	end, { desc = "[c]apture [m]acros" })
+	end, {})
 end
 
 return M

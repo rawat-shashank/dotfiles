@@ -1,4 +1,26 @@
+-- ============================================================================
+-- LifeOS Module: FitNotes Workout Importer
+-- ============================================================================
+-- DOCUMENTATION & SPECIFICATION:
+--
+-- 1. Overview & Functionality:
+--    - Parses FitNotes export text from the system clipboard.
+--    - Automatically extracts workout dates from headers and identifies bodyweight exercises.
+--    - Calculates total workout volume and updates/creates Markdown journal entries
+--      within the structured LifeOS vault path (`YYYY/MM/YYYY-MM-DD.md`).
+--
+-- 2. Features:
+--    - Frontmatter management (maintains fields and updates metadata/workout volume).
+--    - Interactive routine selection picker via `vim.ui.select`.
+--    - Automatically opens the generated or updated journal file in Neovim.
+--
+-- 3. Commands & Keymaps:
+--    - <leader>fn -> Imports FitNotes data from the system clipboard, prompts for routine category,
+--                    and opens the target daily journal file.
+-- ============================================================================
+
 local M = {}
+local config = require("lifeos.config")
 
 local BODYWEIGHT_KEYWORDS = {
 	"hanging knee raise",
@@ -27,6 +49,13 @@ local MONTHS = {
 	December = 12,
 }
 
+--- Parses the workout date from the FitNotes header line.
+--- Cleans non-standard characters and ordinal suffixes, matching day, month, and year.
+--- Falls back to the current system date if parsing fails.
+--- @param header_line string The raw header line string from the FitNotes export.
+--- @return string date_str Formatted date string (`YYYY-MM-DD`).
+--- @return string year_str Formatted year string (`YYYY`).
+--- @return string month_str Formatted month string (`MM`).
 local function parse_date_from_header(header_line)
 	local clean_line = header_line:gsub("\194\160", " ")
 	clean_line = clean_line:gsub("(%d+)st", "%1"):gsub("(%d+)nd", "%1"):gsub("(%d+)rd", "%1"):gsub("(%d+)th", "%1")
@@ -50,6 +79,14 @@ local function parse_date_from_header(header_line)
 	return os.date("%Y-%m-%d", now), os.date("%Y", now), os.date("%m", now)
 end
 
+--- Parses raw FitNotes export text into structured exercise and volume data.
+--- Identifies bodyweight exercises and computes the total lifted volume.
+--- @param raw_text string Raw text payload containing the FitNotes export.
+--- @return string date_str Extracted or fallback workout date (`YYYY-MM-DD`).
+--- @return string year_str Extracted or fallback year (`YYYY`).
+--- @return string month_str Extracted or fallback month (`MM`).
+--- @return table valid_exercises List of parsed exercise tables with sets and metrics.
+--- @return number total_volume Calculated cumulative weight-reps volume.
 local function parse_fitnotes_text(raw_text)
 	local lines = {}
 	for line in raw_text:gmatch("[^\r\n]+") do
@@ -120,6 +157,10 @@ local function parse_fitnotes_text(raw_text)
 	return date_str, year_str, month_str, valid_exercises, total_volume
 end
 
+--- Parses frontmatter metadata and body content from an existing markdown file.
+--- @param content? string Raw file content string.
+--- @return table metadata Parsed metadata table containing raw lines, fields, date, and bodyweight.
+--- @return string body Markdown body content excluding the frontmatter block.
 local function parse_frontmatter(content)
 	if not content then
 		return { raw_lines = {}, fields = {}, bodyweight_kg = 64.0 }, ""
@@ -179,7 +220,13 @@ local function parse_frontmatter(content)
 	return metadata, body
 end
 
-local function load_or_create_post(file_path, date_str, output_dir)
+--- Loads an existing journal post or initializes a new one using the default daily template.
+--- @param file_path string Target filesystem path for the journal entry.
+--- @param output_dir string Root directory path for journal storage.
+--- @return table metadata Parsed metadata table.
+--- @return string content Processed file/template content string.
+--- @return table workout_data Initialized workout status table.
+local function load_or_create_post(file_path, output_dir)
 	local content = ""
 	local metadata = {
 		bodyweight_kg = 64.0,
@@ -214,6 +261,11 @@ local function load_or_create_post(file_path, date_str, output_dir)
 	return metadata, content, workout_data
 end
 
+--- Updates or appends the workout markdown section with parsed exercise logs and routine heading.
+--- @string content Existing body content of the markdown note.
+--- @param exercises table List of parsed exercises with weights and set rep structures.
+--- @string heading Selected category routine heading/title.
+--- @return string content Updated body content string.
 local function update_workout_markdown_section(content, exercises, heading)
 	local workout_lines = { "## Workout\n" }
 
@@ -248,6 +300,11 @@ local function update_workout_markdown_section(content, exercises, heading)
 	end
 end
 
+--- Serializes and saves the updated post metadata frontmatter and body content back to disk.
+--- @param file_path string Target file destination path.
+--- @param metadata table Frontmatter metadata table.
+--- @param workout_data table Workout completion and volume statistics table.
+--- @string content Markdown body content string.
 local function save_post(file_path, metadata, workout_data, content)
 	local fm_lines = { "---" }
 	local updated_keys = {}
@@ -293,6 +350,11 @@ local function save_post(file_path, metadata, workout_data, content)
 	end
 end
 
+--- Converts raw FitNotes text into a structured journal markdown entry and updates stats.
+--- @string raw_text Raw content block from the FitNotes export.
+--- @string? output_dir Optional custom directory path for output files.
+--- @string? heading Optional routine category header string.
+--- @return string file_path Absolute path of the generated or modified journal entry file.
 function M.convert_to_journal(raw_text, output_dir, heading)
 	output_dir = output_dir or "~/LifeOS/10-19_Inbox_&_Journals/12_Journal"
 
@@ -303,7 +365,7 @@ function M.convert_to_journal(raw_text, output_dir, heading)
 
 	local file_path = target_dir .. "/" .. date_str .. ".md"
 
-	local metadata, content, workout_data = load_or_create_post(file_path, date_str, output_dir)
+	local metadata, content, workout_data = load_or_create_post(file_path, output_dir)
 	workout_data.completed = true
 	workout_data.volume_kg = total_volume
 
@@ -314,51 +376,58 @@ function M.convert_to_journal(raw_text, output_dir, heading)
 	return file_path
 end
 
-function M.setup(opts)
-	opts = opts or {}
-	local root_dir = opts.root_dir or vim.fn.getcwd()
+--- Reads clipboard data, prompts the user to select an appropriate routine category via `vim.ui.select`,
+--- processes the workout entry, and opens the resulting daily journal file in Neovim.
+--- @return nil
+function M.import_clipboard()
+	local clip = vim.fn.getreg("+")
+	if not clip or clip == "" then
+		vim.notify("Error: System clipboard is empty!", vim.log.levels.ERROR, { title = "LifeOS" })
+		return
+	end
 
-	vim.keymap.set("n", "<leader>fn", function()
-		local clip = vim.fn.getreg("+")
-		if not clip or clip == "" then
-			vim.notify("Error: System clipboard is empty!", vim.log.levels.ERROR, { title = "LifeOS" })
+	local options = {
+		"Upper (A) - (Strength Focus) 💪",
+		"Lower (A) - (Quad Focus) 🦵",
+		"Upper (B) - (Hypertrophy Focus) 🏋️‍♀️",
+		"Lower (B) - (Posterior Focus) 🦵",
+		"Specialization",
+	}
+
+	vim.ui.select(options, {
+		prompt = "Select Workout Routine:",
+	}, function(choice)
+		if not choice then
 			return
 		end
 
-		local options = {
-			"Upper (A) - (Strength Focus) 💪",
-			"Lower (A) - (Quad Focus) 🦵",
-			"Upper (B) - (Hypertrophy Focus) 🏋️‍♀️",
-			"Lower (B) - (Posterior Focus) 🦵",
-			"Specialization",
-		}
+		local journal_dir = vim.fn.expand(M.root_dir .. config.paths.journal_folder)
+		local target_file = M.convert_to_journal(clip, journal_dir, choice)
 
-		vim.ui.select(options, {
-			prompt = "Select Workout Routine:",
-		}, function(choice)
-			if not choice then
-				return
-			end
+		if target_file ~= "" and vim.fn.filereadable(target_file) == 1 then
+			vim.cmd("edit " .. vim.fn.fnameescape(target_file))
+			vim.notify(
+				"Imported workout for " .. vim.fn.fnamemodify(target_file, ":t:r"),
+				vim.log.levels.INFO,
+				{ title = "LifeOS FitNotes" }
+			)
+		else
+			vim.notify("Workout imported, but failed to open file.", vim.log.levels.WARN, { title = "LifeOS FitNotes" })
+		end
+	end)
+end
 
-			local journal_dir = vim.fn.expand(root_dir .. "/10-19_Inbox_&_Journals/12_Journal")
-			local target_file = M.convert_to_journal(clip, journal_dir, choice)
+--- Initializes the FitNotes module with runtime configurations and registers the user command.
+--- @param opts? table Configuration options table (supports `root_dir`).
+--- @return nil
+function M.setup(opts)
+	opts = opts or {}
+	M.root_dir = opts.root_dir or vim.fn.getcwd()
 
-			if target_file ~= "" and vim.fn.filereadable(target_file) == 1 then
-				vim.cmd("edit " .. vim.fn.fnameescape(target_file))
-				vim.notify(
-					"Imported workout for " .. vim.fn.fnamemodify(target_file, ":t:r"),
-					vim.log.levels.INFO,
-					{ title = "LifeOS FitNotes" }
-				)
-			else
-				vim.notify(
-					"Workout imported, but failed to open file.",
-					vim.log.levels.WARN,
-					{ title = "LifeOS FitNotes" }
-				)
-			end
-		end)
-	end, { desc = "LifeOS: Import [f]it[n]otes with date auto-detection" })
+	-- Register a user command
+	vim.api.nvim_create_user_command("LifeFitNotesImport", function()
+		M.import_clipboard()
+	end, {})
 end
 
 return M

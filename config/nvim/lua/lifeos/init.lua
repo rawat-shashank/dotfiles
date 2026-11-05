@@ -1,8 +1,31 @@
--- ==========================
--- obsidian-nvim
--- ==========================
+-- ============================================================================
+-- LifeOS Module: Obsidian Integration & Core Setup
+-- ============================================================================
+-- DOCUMENTATION & SPECIFICATION:
+--
+-- 1. Overview & Functionality:
+--    - Configures `obsidian.nvim` and `obsidian-flashcards.nvim` plugins within the LifeOS vault root.
+--    - Sets up workspaces, custom daily note structures (`YYYY/MM/YYYY-MM-DD.md`), templates,
+--      attachments, and dynamic frontmatter property injections (such as day names).
+--    - Automatically initializes related LifeOS submodules (Tasks, Macros, Workouts, and Flashcards)
+--      either immediately upon startup (if opened in the vault root) or lazily on first `Obsidian*` command.
+--
+-- 2. Keymaps & Commands:
+--    - <leader>dj -> Open today's daily journal (`Obsidian today`)
+--    - <leader>cn -> Create a new note from an atomic template
+--    - <leader>cN -> Create a standard Obsidian note
+--    - <leader>pi -> Paste and name an image attachment
+--    - <leader>ct -> Capture a task
+--    - <leader>st -> Open task search/popup via FZF
+--    - <leader>ci / <leader>co -> Clock in / clock out of tasks
+--    - <leader>ta -> Archive finished tasks
+--    - <leader>fc -> Start obsidian flashcards
+--    - <leader>cm -> Capture macros
+--    - <leader>fn -> Import FitNotes workout
+-- ============================================================================
 
-local root_dir = "~/LifeOS"
+local config = require("lifeos.config")
+local root_dir = config.paths.root_dir
 
 vim.pack.add({
 	{ src = "https://github.com/obsidian-nvim/obsidian.nvim", load = false },
@@ -16,10 +39,10 @@ local opts = {
 			path = root_dir,
 		},
 	},
-	notes_subdir = "10-19_Inbox_&_Journals/11_Inbox",
+	notes_subdir = config.paths.inbox_folder,
 	new_notes_location = "notes_subdir",
 	templates = {
-		folder = "00-09_Support/02_Templates",
+		folder = config.paths.templates_folder,
 		date_format = "%Y-%m-%d",
 		time_format = "%H:%M",
 	},
@@ -27,12 +50,17 @@ local opts = {
 		template = vim.NIL,
 	},
 	daily_notes = {
-		folder = "10-19_Inbox_&_Journals/12_Journal",
+		folder = config.paths.journal_folder,
 		date_format = "%Y/%m/%Y-%m-%d",
 		template = "Daily_Template",
 	},
 	frontmatter = {
 		enabled = true,
+		--- Dynamically generates and customizes frontmatter properties for notes.
+		--- Injects a custom `day` property corresponding to the day of the week
+		--- if the note resides within the journal directory.
+		--- @param note table The obsidian note object being processed.
+		--- @return table out The modified frontmatter key-value table.
 		func = function(note)
 			local out = require("obsidian.builtin").frontmatter(note)
 
@@ -56,7 +84,7 @@ local opts = {
 		end,
 	},
 	attachments = {
-		folder = "00-09_Support/01_Assets",
+		folder = config.paths.assets_folder,
 		img_text_func = require("obsidian.builtin").img_text_func,
 		img_name_func = function()
 			return string.format("Pasted image %s", os.date("%Y%m%d%H%M%S"))
@@ -89,13 +117,17 @@ local opts = {
 	},
 }
 
+--- Loads package dependencies (`obsidian.nvim`, `obsidian-flashcards.nvim` and LifeOS),
+--- initializes the core plugin configuration, sets up custom user keymaps for
+--- journaling, note creation, tasks, flashcards, macros, and workout imports.
+--- @return nil
 local function load_and_setup_obsidian()
-	-- Force Neovim to load the package files into the runtime path
-	-- obsidian config and keymaps
 	vim.cmd("packadd obsidian.nvim")
 
 	local obsidian = require("obsidian")
 	obsidian.setup(opts)
+
+	-- Daily Journaling
 	vim.keymap.set("n", "<leader>dj", "<cmd>Obsidian today<cr>", {
 		noremap = true,
 		silent = true,
@@ -132,9 +164,15 @@ local function load_and_setup_obsidian()
 	vim.keymap.set("n", "<leader>ct", tasks.capture_task, { desc = "[c]apture [t]ask", noremap = true, silent = true })
 	vim.keymap.set(
 		"n",
-		"<leader>st",
+		"<Leader>st",
+		"<cmd>FzfLua live_grep { cwd = '~/LifeOS', search = '- %[.%]' }<cr>",
+		{ desc = "[s]earch [t]asks" }
+	)
+	vim.keymap.set(
+		"n",
+		"<leader>tt",
 		tasks.open_tasks_popup,
-		{ desc = "[s]earch [t]tasks (FZF)", noremap = true, silent = true }
+		{ desc = "[tt]tasks list (FZF)", noremap = true, silent = true }
 	)
 	vim.keymap.set("n", "<leader>ci", tasks.clock_in, { desc = "[c]lock [i]n", noremap = true, silent = true })
 	vim.keymap.set("n", "<leader>co", tasks.clock_out, { desc = "[c]lock [o]ut", noremap = true, silent = true })
@@ -155,9 +193,15 @@ local function load_and_setup_obsidian()
 
 	-- Initialize macros
 	require("lifeos.macros").setup()
+	vim.keymap.set("n", "<leader>cm", function()
+		require("lifeos.macros").search()
+	end, { desc = "[c]apture [m]acros", noremap = true, silent = true })
 
 	-- LifeOS Enhancements: Import FitNotes Natively
 	require("lifeos.workout").setup({ root_dir = root_dir })
+	vim.keymap.set("n", "<leader>fn", function()
+		require("lifeos.workout").import_clipboard()
+	end, { desc = "LifeOS: Import [f]it [n]otes with date auto-detection", noremap = true, silent = true })
 end
 
 -- Replicates Lazy's lazyload `cond` and `cmd` parameters
