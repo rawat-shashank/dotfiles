@@ -3,6 +3,7 @@ neovim
 tmux
 xclip
 varlad/yazi:cargo:yazi-fm:yazi
+dejan/lazygit:lazygit:lazygit
 nodejs
 npm
 
