@@ -83,6 +83,7 @@ require("mason-conform").setup({
 })
 
 require("catppuccin").setup({
+	auto_integrations = true,
 	transparent_background = false,
 	custom_highlights = function(colors)
 		return {
